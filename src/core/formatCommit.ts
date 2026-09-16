@@ -12,18 +12,17 @@ export function formatCommitMessage(input: CommitFormInput): string {
   const gitmoji = GITMOJI_MAP[input.type];
   const scope = input.scope?.trim();
   const issue = input.issue?.trim();
-  const body = input.body?.trim();
+  let body = input.body?.trim();
   const breakingChangeDescription = input.breakingChangeDescription?.trim();
 
   const scopePart = scope ? `(${scope})` : '';
   const issuePart = issue ? `${issue} ` : '';
-  const title = `${gitmoji} ${input.type}${scopePart}: ${issuePart}${input.description}`;
+  const title = `${gitmoji} ${input.type}${scopePart}: ${input.description}`;
 
   const paragraphs = [title];
 
-  if (body) {
-    paragraphs.push(body);
-  }
+  body = `${body ?? ''} ${issuePart}`;
+  paragraphs.push(body);
 
   if (input.breakingChange && breakingChangeDescription) {
     paragraphs.push(`BREAKING CHANGE: ${breakingChangeDescription}`);
