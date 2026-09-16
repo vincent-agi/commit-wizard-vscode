@@ -2,17 +2,18 @@ import * as vscode from 'vscode';
 import { extractIssueFromBranch } from '../core/branchIssueExtractor';
 import { formatCommitMessage } from '../core/formatCommit';
 import { addScope } from '../core/scopeConfig';
+import type { Scope } from '../core/types';
 import { fillCommitInputBox, getCurrentBranchName } from '../git/gitExtension';
 import { generateHtml } from './html';
 import type { HostToWebviewMessage, WebviewToHostMessage } from './messages';
 
 const CONFIGURATION_SECTION = 'gitmojiCommit';
 
-function readScopes(): string[] {
-  return vscode.workspace.getConfiguration(CONFIGURATION_SECTION).get<string[]>('scopes', []);
+function readScopes(): Scope[] {
+  return vscode.workspace.getConfiguration(CONFIGURATION_SECTION).get<Scope[]>('scopes', []);
 }
 
-async function writeScopes(scopes: string[]): Promise<void> {
+async function writeScopes(scopes: Scope[]): Promise<void> {
   await vscode.workspace
     .getConfiguration(CONFIGURATION_SECTION)
     .update('scopes', scopes, vscode.ConfigurationTarget.Workspace);
@@ -29,12 +30,11 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
   constructor(private readonly extensionUri: vscode.Uri) {}
 
   public resolveWebviewView(webviewView: vscode.WebviewView): void {
-    const html = generateHtml(webviewView.webview, this.extensionUri);
-    webviewView.webview.html = html;
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'dist')],
     };
+    webviewView.webview.html = generateHtml(webviewView.webview, this.extensionUri);
 
     webviewView.webview.onDidReceiveMessage((message: WebviewToHostMessage) =>
       this.handleMessage(webviewView.webview, message),
@@ -87,16 +87,27 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
       return;
     }
 
-    const newScope = await vscode.window.showInputBox({
+    const name = await vscode.window.showInputBox({
       prompt: 'New scope name',
       placeHolder: 'e.g. webview',
+      validateInput: (value) => (value.trim() ? undefined : 'Scope name is required.'),
     });
 
-    if (!newScope) {
+    if (!name) {
       return;
     }
 
-    const updatedScopes = addScope(readScopes(), newScope);
+    const description = await vscode.window.showInputBox({
+      prompt: `Short description for scope "${name}"`,
+      placeHolder: 'e.g. Webview UI and client script',
+      validateInput: (value) => (value.trim() ? undefined : 'Description is required.'),
+    });
+
+    if (!description) {
+      return;
+    }
+
+    const updatedScopes = addScope(readScopes(), { name, description });
     await writeScopes(updatedScopes);
     this.postMessage(webview, { type: 'scopesUpdated', scopes: updatedScopes });
   }
