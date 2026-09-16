@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Conventional Gitmoji Commit** is a VS Code extension that builds
+**Commit Wizard** is a VS Code extension that builds
 [Conventional Commits](https://www.conventionalcommits.org/) messages, each prefixed with the
 matching [Gitmoji](https://gitmoji.dev/), from a form docked in the Primary Sidebar, and writes
 the result into the built-in Git extension's commit input box.
@@ -63,9 +63,11 @@ BREAKING CHANGE: <breakingChangeDescription>
   `fixes`, `resolves`, `refs`, or `seeAlso`), formatted by `formatIssueLine` in `formatCommit.ts`:
   `closes`/`fixes`/`resolves` render as `"<Label> <issue>"` (no colon — the exact syntax
   GitHub/GitLab require to auto-close an issue on merge), `refs`/`seeAlso` render as
-  `"<Label>: <issue>"`. `issue` is used verbatim, with no `#` added — it may already carry one
-  (from `extractIssueFromBranch`'s bare-number case) or not (a Jira-style key), and adding one
-  unconditionally used to produce a `##123` double-hash for the former.
+  `"<Label>: <issue>"`. Before rendering, `issue` passes through `normalizeIssue`, which
+  prepends `#` only when the value is purely numeric (`123` -> `#123` — GitHub/GitLab only
+  recognize the hashed form) and leaves it untouched otherwise: already-hashed (`#456`, from
+  `extractIssueFromBranch`'s bare-number case — avoids a `##` double-hash) or a non-numeric,
+  Jira-style key (`PROJ-123`, which never takes a `#`).
 - The `BREAKING CHANGE:` footer is only emitted when `breakingChange` is `true` **and**
   `breakingChangeDescription` is non-empty.
 

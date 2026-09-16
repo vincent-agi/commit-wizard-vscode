@@ -1,7 +1,7 @@
 {
-  "name": "conventional-gitmoji-commit",
-  "displayName": "Conventional Gitmoji Commit",
-  "description": "Build Conventional Commits with Gitmoji from a sidebar webview, with branch-based issue detection and native Git integration.",
+  "name": "commit-wizard-vscode",
+  "displayName": "Commit Wizard",
+  "description": "An interactive VS Code sidebar extension to effortlessly craft structured Conventional Commits with Gitmojis, dynamic scopes, and automated issue tracking.",
   "version": "0.1.0",
   "publisher": "vincent-agi",
   "license": "MIT",
@@ -32,7 +32,7 @@
       ]
     },
     "configuration": {
-      "title": "Conventional Gitmoji Commit",
+      "title": "Commit Wizard",
       "properties": {
         "gitmojiCommit.scopes": {
           "type": "array",

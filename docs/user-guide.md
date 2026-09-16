@@ -2,7 +2,7 @@
 
 ## What it does
 
-Conventional Gitmoji Commit adds a **Commit Builder** panel to the Primary Sidebar. Fill in a
+Commit Wizard adds a **Commit Builder** panel to the Primary Sidebar. Fill in a
 form, watch a live preview of the formatted commit message, then click **Fill Commit** to send
 it straight into the Source Control input box — no manual typing of `type(scope): emoji ...`
 required.
@@ -12,7 +12,7 @@ required.
 1. From the `.vsix` file: open the Extensions view (`Cmd+Shift+X` / `Ctrl+Shift+X`) -> `...`
    menu -> **Install from VSIX...** -> select the packaged file (see
    `docs/playbook-runbook.md` for how to build it).
-2. From the Marketplace (once published): search **Conventional Gitmoji Commit** and click
+2. From the Marketplace (once published): search **Commit Wizard** and click
    **Install**.
 
 ## Opening the panel

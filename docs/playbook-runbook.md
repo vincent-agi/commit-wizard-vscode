@@ -67,7 +67,7 @@ npm run compile  # tsc typecheck + esbuild bundle -> dist/extension.js
 npx vsce package
 ```
 
-Produces `conventional-gitmoji-commit-<version>.vsix` in the project root. Sanity-check the
+Produces `commit-wizard-vscode-<version>.vsix` in the project root. Sanity-check the
 package contents first if `.vscodeignore` changes:
 
 ```bash

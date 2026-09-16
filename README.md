@@ -1,4 +1,4 @@
-# Conventional Gitmoji Commit
+# Commit Wizard
 
 Build [Conventional Commits](https://www.conventionalcommits.org/) with matching
 [Gitmoji](https://gitmoji.dev/) from a sidebar form in VS Code, with a live preview and

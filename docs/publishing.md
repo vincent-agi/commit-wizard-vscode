@@ -1,6 +1,6 @@
 # Publishing to the VS Code Marketplace
 
-This covers publishing **Conventional Gitmoji Commit** to the
+This covers publishing **Commit Wizard** to the
 [Visual Studio Code Marketplace](https://marketplace.visualstudio.com/vscode), using `vsce`
 (`@vscode/vsce`, already a devDependency — see `docs/playbook-runbook.md` for local
 build/package steps this builds on).
@@ -107,7 +107,7 @@ npx vsce publish [patch|minor|major]
 
 ### 4. Verify the listing
 
-Check `https://marketplace.visualstudio.com/items?itemName=vincent-agi.conventional-gitmoji-commit`
+Check `https://marketplace.visualstudio.com/items?itemName=vincent-agi.commit-wizard-vscode`
 (propagation can take a few minutes) — icon, README rendering, and the version number.
 
 ## Publishing a pre-release
@@ -122,7 +122,7 @@ Users see it only if they've opted into pre-release versions for the extension i
 
 ## Unlisting or removing a version
 
-- **Unpublish the whole extension**: `npx vsce unpublish vincent-agi.conventional-gitmoji-commit`
+- **Unpublish the whole extension**: `npx vsce unpublish vincent-agi.commit-wizard-vscode`
   — irreversible without republishing from scratch under the same identifier; VS Code warns
   before completing.
 - There is no way to delete a single published version — ship a new one instead.

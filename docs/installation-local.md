@@ -1,6 +1,6 @@
 # Local Installation Guide
 
-This guide covers installing **Conventional Gitmoji Commit** locally, from source, without
+This guide covers installing **Commit Wizard** locally, from source, without
 publishing to the Marketplace. Two paths are covered:
 
 - **Path A — Install the packaged `.vsix`** into your regular VS Code, so it behaves like any
@@ -33,7 +33,7 @@ npm run compile   # type-check + bundle to dist/
 npm run package    # runs vsce package --allow-missing-repository
 ```
 
-This produces `conventional-gitmoji-commit-0.1.0.vsix` in the project root (the version number
+This produces `commit-wizard-vscode-0.1.0.vsix` in the project root (the version number
 matches `version` in `package.json`).
 
 ### 3. Install the `.vsix`
@@ -43,7 +43,7 @@ Pick one:
 **CLI:**
 
 ```bash
-code --install-extension conventional-gitmoji-commit-0.1.0.vsix
+code --install-extension commit-wizard-vscode-0.1.0.vsix
 ```
 
 **UI:** Extensions view (`Cmd+Shift+X` / `Ctrl+Shift+X`) → `...` menu (top-right) → **Install
@@ -55,7 +55,7 @@ from VSIX...** → select the file.
 
 Reload VS Code if prompted. Open any folder containing a Git repository — a new icon appears in
 the Activity Bar; clicking it opens the **Commit Builder** sidebar view. Confirm it's active:
-Extensions view → search "Conventional Gitmoji Commit" → should show as installed and enabled.
+Extensions view → search "Commit Wizard" → should show as installed and enabled.
 
 ### 5. Updating after a code change
 
@@ -64,7 +64,7 @@ VS Code does not hot-reload installed (non-dev) extensions. After changing sourc
 ```bash
 npm run compile
 npm run package
-code --install-extension conventional-gitmoji-commit-0.1.0.vsix --force
+code --install-extension commit-wizard-vscode-0.1.0.vsix --force
 ```
 
 `--force` re-installs over the existing version even though the version number hasn't changed.
@@ -74,7 +74,7 @@ rather than a silent reinstall.)
 ### 6. Uninstalling
 
 ```bash
-code --uninstall-extension vincent-agi.conventional-gitmoji-commit
+code --uninstall-extension vincent-agi.commit-wizard-vscode
 ```
 
 or Extensions view → find it → gear icon → **Uninstall**.

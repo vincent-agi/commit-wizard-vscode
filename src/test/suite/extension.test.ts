@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 
 suite('Extension activation', () => {
   test('registers the commit builder webview view', async () => {
-    const extension = vscode.extensions.getExtension('vincent-agi.conventional-gitmoji-commit');
+    const extension = vscode.extensions.getExtension('vincent-agi.commit-wizard-vscode');
     assert.ok(extension, 'extension should be discoverable by its id');
 
     await extension?.activate();
