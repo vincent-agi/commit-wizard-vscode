@@ -38,7 +38,7 @@
           "type": "array",
           "items": { "type": "string" },
           "default": [],
-          "scope": "resource",
+          "scope": "window",
           "description": "Project-specific scopes offered in the scope dropdown."
         },
         "gitmojiCommit.titleWarningLength": {
