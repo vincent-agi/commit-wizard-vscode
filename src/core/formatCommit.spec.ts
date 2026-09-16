@@ -37,9 +37,21 @@ describe('formatCommitMessage', () => {
     ).toBe('✨ feat: add live preview\n\nSome detailed explanation.\n\nRefs: PROJ-123\n');
   });
 
-  it('uses the issue value verbatim, without adding its own "#" (avoids a double "##")', () => {
+  it('leaves an already-hashed issue value untouched (avoids a double "##")', () => {
     expect(formatCommitMessage({ ...base, issue: '#456' })).toBe(
       '✨ feat: add live preview\n\n\n\nRefs: #456\n',
+    );
+  });
+
+  it('prepends "#" to a purely numeric issue value, for GitHub/GitLab autolinking', () => {
+    expect(formatCommitMessage({ ...base, issue: '456' })).toBe(
+      '✨ feat: add live preview\n\n\n\nRefs: #456\n',
+    );
+  });
+
+  it('does not prepend "#" to a non-numeric, Jira-style issue key', () => {
+    expect(formatCommitMessage({ ...base, issue: 'PROJ-123' })).toBe(
+      '✨ feat: add live preview\n\n\n\nRefs: PROJ-123\n',
     );
   });
 

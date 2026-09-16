@@ -2,20 +2,30 @@ import { ISSUE_KEYWORD_LABELS } from './types';
 import type { CommitFormInput, IssueKeyword } from './types';
 
 const COLON_KEYWORDS: ReadonlySet<IssueKeyword> = new Set(['refs', 'seeAlso']);
+const PURELY_NUMERIC = /^\d+$/;
+
+/**
+ * Normalizes an issue value for GitHub/GitLab autolinking: prepends `#` only when the value is
+ * purely numeric (e.g. `123` -> `#123`), since that's the literal syntax GitHub/GitLab require
+ * to recognize an issue reference. Left untouched when it already has a `#` (idempotent — no
+ * `##` double-hash) or when it's a non-numeric, Jira-style key (e.g. `PROJ-123`), which never
+ * takes a `#`.
+ */
+function normalizeIssue(issue: string): string {
+  return PURELY_NUMERIC.test(issue) ? `#${issue}` : issue;
+}
 
 /**
  * Formats a GitHub/GitLab issue-reference footer line for the given keyword.
  *
  * `closes`/`fixes`/`resolves` render as `"<Label> <issue>"` (no colon), matching the exact
  * syntax GitHub/GitLab require to auto-close an issue on merge. `refs`/`seeAlso` render as
- * `"<Label>: <issue>"`. `issue` is used verbatim — it may already carry a `#` (from
- * {@link import('./branchIssueExtractor').extractIssueFromBranch}) or not (a Jira-style key),
- * so no `#` is added here.
+ * `"<Label>: <issue>"`. `issue` is normalized via {@link normalizeIssue} first.
  */
 function formatIssueLine(keyword: IssueKeyword, issue: string): string {
   const label = ISSUE_KEYWORD_LABELS[keyword];
   const separator = COLON_KEYWORDS.has(keyword) ? ': ' : ' ';
-  return `${label}${separator}${issue}`;
+  return `${label}${separator}${normalizeIssue(issue)}`;
 }
 
 /**
