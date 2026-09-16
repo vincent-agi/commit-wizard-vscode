@@ -107,3 +107,4 @@ window.addEventListener('message', (event: MessageEvent<HostToWebviewMessage>) =
 });
 
 render();
+vscode.postMessage({ type: 'ready' });

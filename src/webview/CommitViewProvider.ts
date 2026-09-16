@@ -39,15 +39,6 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.onDidReceiveMessage((message: WebviewToHostMessage) =>
       this.handleMessage(webviewView.webview, message),
     );
-
-    const branchName = getCurrentBranchName();
-    const detectedIssue = branchName ? extractIssueFromBranch(branchName) : undefined;
-
-    this.postMessage(webviewView.webview, {
-      type: 'init',
-      scopes: readScopes(),
-      detectedIssue,
-    });
   }
 
   private async handleMessage(
@@ -55,6 +46,9 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
     message: WebviewToHostMessage,
   ): Promise<void> {
     switch (message.type) {
+      case 'ready':
+        this.sendInit(webview);
+        return;
       case 'formChanged':
         return;
       case 'addScope':
@@ -64,6 +58,25 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
         this.fillCommit(message.input);
         return;
     }
+  }
+
+  /**
+   * Sends the initial scope list and detected issue to the webview client. Only called in
+   * response to the client's own 'ready' message — posting it eagerly right after setting
+   * `webview.html` would race the webview's script load: VS Code drops `postMessage` calls
+   * sent before the webview's message port is established rather than queuing them, so an
+   * eager post is silently lost whenever the webview is recreated (e.g. after the sidebar is
+   * closed and reopened).
+   */
+  private sendInit(webview: vscode.Webview): void {
+    const branchName = getCurrentBranchName();
+    const detectedIssue = branchName ? extractIssueFromBranch(branchName) : undefined;
+
+    this.postMessage(webview, {
+      type: 'init',
+      scopes: readScopes(),
+      detectedIssue,
+    });
   }
 
   private async addScope(webview: vscode.Webview): Promise<void> {

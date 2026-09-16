@@ -2,6 +2,7 @@ import type { CommitFormInput } from '../core/types';
 
 /** Message shape sent from the webview client to the extension host. */
 export type WebviewToHostMessage =
+  | { type: 'ready' }
   | { type: 'formChanged'; input: CommitFormInput }
   | { type: 'addScope' }
   | { type: 'fillCommit'; input: CommitFormInput };
