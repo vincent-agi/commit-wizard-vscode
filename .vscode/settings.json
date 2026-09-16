@@ -1,0 +1,18 @@
+{
+    "gitmojiCommit.scopes": [
+        "api",
+        "auth",
+        "config",
+        "core",
+        "db",
+        "deps",
+        "sec",
+        "ui",
+        "layout",
+        "i18n",
+        "styles",
+        "ci",
+        "docs",
+        "test"
+    ]
+}
