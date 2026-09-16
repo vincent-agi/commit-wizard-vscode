@@ -1,4 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none">
-  <circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.3"/>
-  <path d="M8 4.5v3.2l2.2 1.3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="100%" height="100%">
+  <!-- Arrière-plan badge arrondi -->
+  <rect x="4" y="4" width="120" height="120" rx="24" fill="#1E1E2E"/>
+  
+  <!-- Ligne de branche Git -->
+  <path d="M48 92 V44" stroke="#38BDF8" stroke-width="8" stroke-linecap="round"/>
+  <path d="M48 68 C48 52 80 56 80 44" stroke="#38BDF8" stroke-width="8" stroke-linecap="round" fill="none"/>
+  
+  <!-- Nœud Git inférieur -->
+  <circle cx="48" cy="92" r="10" fill="#1E1E2E" stroke="#38BDF8" stroke-width="8"/>
+  
+  <!-- Étincelle principale (Sparkle / Gitmoji) -->
+  <path d="M80 18 C80 32 84 36 98 36 C84 36 80 40 80 54 C80 40 76 36 62 36 C76 36 80 32 80 18 Z" fill="#FFB800"/>
+  
+  <!-- Petite étincelle secondaire -->
+  <path d="M48 24 C48 31 50 33 57 33 C50 33 48 35 48 42 C48 35 46 33 39 33 C46 33 48 31 48 24 Z" fill="#FFB800" opacity="0.85"/>
 </svg>
