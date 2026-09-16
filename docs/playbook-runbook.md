@@ -37,8 +37,16 @@ Unit tests cover `src/core/*` only — no VS Code runtime required, so they run 
 are fast enough for a pre-commit loop.
 
 Integration/E2E tests that need the real Extension Host use `@vscode/test-electron`
-(`src/test/runTest.ts`, not wired into `npm test` to keep the default loop fast — run it
-explicitly with `node ./out/test/runTest.js` after `npm run compile`).
+(`src/test/runTest.ts`, not wired into `npm test` to keep the default loop fast). Run them with:
+
+```bash
+npm run test:e2e   # compiles, downloads/launches a real VS Code, runs src/test/suite/*.test.ts
+```
+
+This downloads a full VS Code build on first run and spawns its Electron binary directly — it
+needs a normal desktop session and will not run inside a locked-down sandbox/CI container
+without Electron/GUI support (spawn fails with `ENOENT`/`code -2` there). Run it on a local
+machine or a CI runner with `xvfb`/headless display support.
 
 ## Linting & formatting
 
