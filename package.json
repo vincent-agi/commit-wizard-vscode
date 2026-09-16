@@ -26,7 +26,8 @@
         {
           "type": "webview",
           "id": "gitmojiCommit.commitView",
-          "name": "Commit Builder"
+          "name": "Commit Builder",
+          "icon": "media/icon.svg"
         }
       ]
     },
@@ -62,7 +63,7 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "pretest:e2e": "npm run compile",
     "test:e2e": "node ./out/test/runTest.js",
-    "package": "vsce package",
+    "package": "vsce package --allow-missing-repository",
     "vscode:prepublish": "npm run compile"
   },
   "devDependencies": {

@@ -4,9 +4,9 @@ Build [Conventional Commits](https://www.conventionalcommits.org/) with matching
 [Gitmoji](https://gitmoji.dev/) from a sidebar form in VS Code, with a live preview and
 one-click injection into the Source Control input box.
 
-See [docs/user-guide.md](docs/user-guide.md) for usage, [docs/technical-docs.md](docs/technical-docs.md)
-for architecture, [docs/adr/](docs/adr/) for design decisions, and
-[docs/playbook-runbook.md](docs/playbook-runbook.md) for setup, debugging, and packaging.
+In the source repository, see `docs/user-guide.md` for usage, `docs/technical-docs.md` for
+architecture, `docs/adr/` for design decisions, and `docs/playbook-runbook.md` for setup,
+debugging, and packaging.
 
 ## Features
 
@@ -27,5 +27,5 @@ npm install
 npm run compile
 ```
 
-Press `F5` in VS Code to launch an Extension Development Host. See
-[docs/playbook-runbook.md](docs/playbook-runbook.md) for the full workflow.
+Press `F5` in VS Code to launch an Extension Development Host. See `docs/playbook-runbook.md`
+in the source repository for the full workflow.
