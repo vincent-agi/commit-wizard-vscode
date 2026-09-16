@@ -21,7 +21,7 @@ export function formatCommitMessage(input: CommitFormInput): string {
 
   const paragraphs = [title];
 
-  body = `${body ?? ''} ${issuePart}`;
+  body = `${body ?? ''}\n\n${issuePart}`;
   paragraphs.push(body);
 
   if (input.breakingChange && breakingChangeDescription) {
