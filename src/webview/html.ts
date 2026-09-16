@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { GITMOJI_CATALOG } from '../core/gitmoji';
 import { COMMIT_TYPE_DESCRIPTIONS, GITMOJI_MAP } from '../core/types';
 import type { CommitType } from '../core/types';
 import { getStyles } from './styles';
@@ -33,6 +34,14 @@ function typeOptionsHtml(): string {
   }).join('');
 }
 
+function gitmojiOptionsHtml(): string {
+  const defaultGitmoji = GITMOJI_MAP[TYPE_ORDER[0]];
+  return GITMOJI_CATALOG.map(({ emoji, code, description }) => {
+    const selected = emoji === defaultGitmoji ? ' selected' : '';
+    return `<option value="${emoji}" title="${description}"${selected}>${emoji} ${code} — ${description}</option>`;
+  }).join('');
+}
+
 /**
  * Generates the full HTML document for the commit builder webview, including a nonce-scoped
  * Content Security Policy and the bundled client script.
@@ -62,6 +71,9 @@ export function generateHtml(webview: vscode.Webview, extensionUri: vscode.Uri):
 <body>
   <label for="type">Type</label>
   <select id="type">${typeOptionsHtml()}</select>
+
+  <label for="gitmoji">Gitmoji</label>
+  <select id="gitmoji">${gitmojiOptionsHtml()}</select>
 
   <label for="scope">Scope</label>
   <div class="row">

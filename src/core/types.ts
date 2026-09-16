@@ -11,14 +11,19 @@ export type CommitType =
   | 'build'
   | 'ci';
 
-/** Maps each {@link CommitType} to its corresponding Gitmoji glyph. */
+/**
+ * Maps each {@link CommitType} to its default Gitmoji glyph. Used only to pre-fill the
+ * Gitmoji dropdown when the Type changes — the actual commit message uses whichever gitmoji
+ * is selected in {@link CommitFormInput.gitmoji}, which may differ (see the full
+ * {@link GITMOJI_CATALOG "gitmoji.ts" catalog}).
+ */
 export const GITMOJI_MAP: Record<CommitType, string> = {
   feat: '✨',
   fix: '🐛',
   docs: '📝',
   style: '🎨',
   refactor: '♻️',
-  perf: '⚡',
+  perf: '⚡️',
   test: '🧪',
   chore: '🔧',
   build: '🏗️',
@@ -51,6 +56,8 @@ export interface Scope {
 /** All fields collected from the commit builder form. */
 export interface CommitFormInput {
   type: CommitType;
+  /** The gitmoji glyph to prefix the message with, picked from the Gitmoji dropdown. */
+  gitmoji: string;
   scope?: string;
   issue?: string;
   description: string;

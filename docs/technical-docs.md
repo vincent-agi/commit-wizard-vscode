@@ -13,6 +13,7 @@ the result into the built-in Git extension's commit input box.
 src/
   core/                     # Pure logic, zero dependency on `vscode`. 100% unit-testable.
     types.ts                # CommitType, CommitFormInput, Scope, GITMOJI_MAP, COMMIT_TYPE_DESCRIPTIONS
+    gitmoji.ts              # GITMOJI_CATALOG: the full official Gitmoji list (gitmoji.dev)
     formatCommit.ts         # formatCommitMessage(input) -> string
     branchIssueExtractor.ts # extractIssueFromBranch(branchName) -> string | undefined
     scopeConfig.ts          # addScope(existingScopes: Scope[], newScope: Scope) -> Scope[]
@@ -41,22 +42,28 @@ booting the VS Code Extension Host. VS Code API-dependent code is exercised sepa
 Builds the final commit message string:
 
 ```
-<gitmoji> <type>(<scope>): <issue> <description>
+<gitmoji> <type>(<scope>): <description>
 
 <body>
+
+Refs: #<issue>
 
 BREAKING CHANGE: <breakingChangeDescription>
 ```
 
+- `gitmoji` is a plain string field on `CommitFormInput`, not derived from `type` — the webview's
+  Gitmoji dropdown lets it be any entry from the full `GITMOJI_CATALOG` (see below), not just the
+  type's default. `formatCommitMessage` uses `input.gitmoji` verbatim.
 - `scope` is optional — when absent, the parens are omitted (`<gitmoji> <type>: ...`).
-- `issue` is optional and rendered as a leading token in the title
-  (e.g. `✨ feat(webview): PROJ-123 add live preview`).
-- `body` is only emitted (as its own paragraph, blank-line separated) when non-empty.
+- The body paragraph is always emitted, even when `body` is empty — `body` and the `issue`'s
+  `Refs: #<issue>` line are joined with a blank line inside that one paragraph, so a commit with
+  neither still has an (empty-looking) second paragraph.
 - The `BREAKING CHANGE:` footer is only emitted when `breakingChange` is `true` **and**
   `breakingChangeDescription` is non-empty.
-- Every `CommitType` maps to exactly one gitmoji via `GITMOJI_MAP` in `types.ts`
-  (`feat`->✨, `fix`->🐛, `docs`->📝, `style`->🎨, `refactor`->♻️, `perf`->⚡, `test`->🧪,
-  `chore`->🔧, `build`->🏗️, `ci`->💚).
+- `GITMOJI_MAP` in `types.ts` gives each `CommitType` a *default* gitmoji
+  (`feat`->✨, `fix`->🐛, `docs`->📝, `style`->🎨, `refactor`->♻️, `perf`->⚡️, `test`->🧪,
+  `chore`->🔧, `build`->🏗️, `ci`->💚) — used only to pre-fill the Gitmoji dropdown when Type
+  changes, not to constrain the final message.
 
 ### `extractIssueFromBranch(branchName: string): string | undefined`
 
@@ -84,6 +91,15 @@ mutates the input array. When `newScope.name` matches an existing entry, that en
 `description` is replaced instead of creating a duplicate. Rejects (returns an unchanged copy)
 when `name` or `description` is empty after trimming — enforced here so the "add scope" UI flow
 can rely on this as the single source of truth for what counts as a valid scope.
+
+### `GITMOJI_CATALOG: readonly GitmojiEntry[]`
+
+The full official [Gitmoji](https://gitmoji.dev/) list (~75 entries), each an
+`{ emoji, code, description }`. Populates the Gitmoji dropdown independently of the Type
+dropdown's 10 Conventional Commit keywords — most entries (e.g. `:fire:` "Remove code or
+files") don't correspond to any single Conventional Commit `type`. `gitmoji.spec.ts` guards its
+shape (non-empty fields, `:snake_case:` codes, no duplicate codes) and cross-checks that every
+`GITMOJI_MAP` default is present in the catalog.
 
 ### `titleLengthStatus(title, warnAt, maxAt): 'ok' | 'warn' | 'over'`
 

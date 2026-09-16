@@ -1,15 +1,14 @@
-import { GITMOJI_MAP } from './types';
 import type { CommitFormInput } from './types';
 
 /**
- * Builds a Conventional Commits message, prefixed with the Gitmoji matching
- * `input.type`, from a {@link CommitFormInput}.
+ * Builds a Conventional Commits message, prefixed with the gitmoji selected in
+ * `input.gitmoji`, from a {@link CommitFormInput}.
  *
  * @param input - Values collected from the commit builder form.
  * @returns The formatted commit message, ready to write into a Git commit input box.
  */
 export function formatCommitMessage(input: CommitFormInput): string {
-  const gitmoji = GITMOJI_MAP[input.type];
+  const gitmoji = input.gitmoji;
   const scope = input.scope?.trim();
   const issue = input.issue?.trim();
   let body = input.body?.trim();

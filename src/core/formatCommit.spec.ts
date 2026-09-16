@@ -4,6 +4,7 @@ import type { CommitFormInput } from './types';
 
 const base: CommitFormInput = {
   type: 'feat',
+  gitmoji: '✨',
   description: 'add live preview',
   breakingChange: false,
 };
@@ -35,33 +36,12 @@ describe('formatCommitMessage', () => {
     ).toBe('✨ feat: add live preview\n\nSome detailed explanation.\n\nRefs: #PROJ-123\n');
   });
 
-  it('uses the correct gitmoji for each commit type', () => {
-    expect(formatCommitMessage({ ...base, type: 'fix' })).toBe(
+  it('uses whichever gitmoji is selected in input.gitmoji, independently of the type', () => {
+    expect(formatCommitMessage({ ...base, type: 'fix', gitmoji: '🐛' })).toBe(
       '🐛 fix: add live preview\n\n\n\n',
     );
-    expect(formatCommitMessage({ ...base, type: 'docs' })).toBe(
-      '📝 docs: add live preview\n\n\n\n',
-    );
-    expect(formatCommitMessage({ ...base, type: 'style' })).toBe(
-      '🎨 style: add live preview\n\n\n\n',
-    );
-    expect(formatCommitMessage({ ...base, type: 'refactor' })).toBe(
-      '♻️ refactor: add live preview\n\n\n\n',
-    );
-    expect(formatCommitMessage({ ...base, type: 'perf' })).toBe(
-      '⚡ perf: add live preview\n\n\n\n',
-    );
-    expect(formatCommitMessage({ ...base, type: 'test' })).toBe(
-      '🧪 test: add live preview\n\n\n\n',
-    );
-    expect(formatCommitMessage({ ...base, type: 'chore' })).toBe(
-      '🔧 chore: add live preview\n\n\n\n',
-    );
-    expect(formatCommitMessage({ ...base, type: 'build' })).toBe(
-      '🏗️ build: add live preview\n\n\n\n',
-    );
-    expect(formatCommitMessage({ ...base, type: 'ci' })).toBe(
-      '💚 ci: add live preview\n\n\n\n',
+    expect(formatCommitMessage({ ...base, type: 'chore', gitmoji: '🔥' })).toBe(
+      '🔥 chore: add live preview\n\n\n\n',
     );
   });
 

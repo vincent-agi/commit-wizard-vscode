@@ -1,5 +1,6 @@
 import { formatCommitMessage } from '../core/formatCommit';
 import { titleLengthStatus } from '../core/titleLength';
+import { GITMOJI_MAP } from '../core/types';
 import type { CommitFormInput, CommitType, Scope } from '../core/types';
 import type { HostToWebviewMessage, WebviewToHostMessage } from './messages';
 
@@ -10,6 +11,7 @@ declare function acquireVsCodeApi(): {
 const vscode = acquireVsCodeApi();
 
 const typeSelect = document.getElementById('type') as HTMLSelectElement;
+const gitmojiSelect = document.getElementById('gitmoji') as HTMLSelectElement;
 const scopeSelect = document.getElementById('scope') as HTMLSelectElement;
 const addScopeButton = document.getElementById('addScope') as HTMLButtonElement;
 const issueInput = document.getElementById('issue') as HTMLInputElement;
@@ -32,6 +34,7 @@ const TITLE_MAX_AT = 72;
 function currentInput(): CommitFormInput {
   return {
     type: typeSelect.value as CommitType,
+    gitmoji: gitmojiSelect.value,
     scope: scopeSelect.value || undefined,
     issue: issueInput.value || undefined,
     description: descriptionInput.value,
@@ -73,7 +76,7 @@ function setScopes(scopes: Scope[]): void {
 }
 
 for (const element of [
-  typeSelect,
+  gitmojiSelect,
   scopeSelect,
   issueInput,
   descriptionInput,
@@ -84,6 +87,14 @@ for (const element of [
   element.addEventListener('input', render);
   element.addEventListener('change', render);
 }
+
+typeSelect.addEventListener('change', () => {
+  const defaultGitmoji = GITMOJI_MAP[typeSelect.value as CommitType];
+  if (defaultGitmoji) {
+    gitmojiSelect.value = defaultGitmoji;
+  }
+  render();
+});
 
 addScopeButton.addEventListener('click', () => {
   vscode.postMessage({ type: 'addScope' });
