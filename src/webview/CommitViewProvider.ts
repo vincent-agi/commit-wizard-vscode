@@ -29,11 +29,12 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
   constructor(private readonly extensionUri: vscode.Uri) {}
 
   public resolveWebviewView(webviewView: vscode.WebviewView): void {
+    const html = generateHtml(webviewView.webview, this.extensionUri);
+    webviewView.webview.html = html;
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'dist')],
     };
-    webviewView.webview.html = generateHtml(webviewView.webview, this.extensionUri);
 
     webviewView.webview.onDidReceiveMessage((message: WebviewToHostMessage) =>
       this.handleMessage(webviewView.webview, message),
