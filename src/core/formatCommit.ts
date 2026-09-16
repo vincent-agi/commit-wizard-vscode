@@ -16,7 +16,7 @@ export function formatCommitMessage(input: CommitFormInput): string {
   const breakingChangeDescription = input.breakingChangeDescription?.trim();
 
   const scopePart = scope ? `(${scope})` : '';
-  const issuePart = issue ? `${issue} ` : '';
+  const issuePart = issue ? `Refs: #${issue}\n` : '';
   const title = `${gitmoji} ${input.type}${scopePart}: ${input.description}`;
 
   const paragraphs = [title];

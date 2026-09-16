@@ -19,20 +19,20 @@ describe('formatCommitMessage', () => {
     );
   });
 
-  it('appends the issue token to the body line, not the title, when present', () => {
+  it('appends a "Refs: #<issue>" line to the body, not the title, when present', () => {
     expect(formatCommitMessage({ ...base, scope: 'webview', issue: 'PROJ-123' })).toBe(
-      '✨ feat(webview): add live preview\n\n PROJ-123 ',
+      '✨ feat(webview): add live preview\n\n Refs: #PROJ-123\n',
     );
   });
 
-  it('combines an explicit body and an issue token on the same body line', () => {
+  it('combines an explicit body and a "Refs: #<issue>" line on the same body paragraph', () => {
     expect(
       formatCommitMessage({
         ...base,
         body: 'Some detailed explanation.',
         issue: 'PROJ-123',
       }),
-    ).toBe('✨ feat: add live preview\n\nSome detailed explanation. PROJ-123 ');
+    ).toBe('✨ feat: add live preview\n\nSome detailed explanation. Refs: #PROJ-123\n');
   });
 
   it('uses the correct gitmoji for each commit type', () => {
