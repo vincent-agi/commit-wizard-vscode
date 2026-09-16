@@ -12,10 +12,10 @@ the result into the built-in Git extension's commit input box.
 ```
 src/
   core/                     # Pure logic, zero dependency on `vscode`. 100% unit-testable.
-    types.ts                # CommitType, CommitFormInput, GITMOJI_MAP
+    types.ts                # CommitType, CommitFormInput, Scope, GITMOJI_MAP, COMMIT_TYPE_DESCRIPTIONS
     formatCommit.ts         # formatCommitMessage(input) -> string
     branchIssueExtractor.ts # extractIssueFromBranch(branchName) -> string | undefined
-    scopeConfig.ts          # addScope(existingScopes, newScope) -> string[]
+    scopeConfig.ts          # addScope(existingScopes: Scope[], newScope: Scope) -> Scope[]
     titleLength.ts          # titleLengthStatus(title, warnAt, maxAt) -> 'ok'|'warn'|'over'
   git/
     gitExtension.ts         # Thin wrapper around the built-in `vscode.git` extension API
@@ -76,11 +76,14 @@ Matching rules, in order of precedence:
 If none match, returns `undefined` — the extension leaves the Issue field blank rather than
 guessing.
 
-### `addScope(existingScopes: string[], newScope: string): string[]`
+### `addScope(existingScopes: Scope[], newScope: Scope): Scope[]`
 
-Returns a new array with `newScope` appended, trimmed, deduplicated (case-sensitive exact match),
-and re-sorted alphabetically. Never mutates the input array. Rejects (returns the original array
-unchanged) when `newScope` is empty after trimming.
+A `Scope` is `{ name, description }`; both fields are mandatory. Returns a new array with
+`newScope` added, with `name` and `description` trimmed, sorted alphabetically by `name`. Never
+mutates the input array. When `newScope.name` matches an existing entry, that entry's
+`description` is replaced instead of creating a duplicate. Rejects (returns an unchanged copy)
+when `name` or `description` is empty after trimming — enforced here so the "add scope" UI flow
+can rely on this as the single source of truth for what counts as a valid scope.
 
 ### `titleLengthStatus(title, warnAt, maxAt): 'ok' | 'warn' | 'over'`
 
@@ -90,9 +93,9 @@ Pure classification used to drive the character-counter's visual state in the we
 
 ### `vscode.workspace.getConfiguration`
 
-`gitmojiCommit.scopes` is read on webview load and written (via
-`ConfigurationTarget.Workspace`) whenever the user adds a scope through the "+" button. See
-[ADR 0002](adr/0002-state-management-and-persistence.md).
+`gitmojiCommit.scopes` (an array of `{ name, description }`) is read on webview load and written
+(via `ConfigurationTarget.Workspace`) whenever the user adds a scope through the "+" button,
+which prompts for both fields — see [ADR 0002](adr/0002-state-management-and-persistence.md).
 
 ### `vscode.git` extension API
 
@@ -120,8 +123,8 @@ with `clientScript.ts`):
 | webview -> host   | `formChanged`      | full `CommitFormInput` snapshot           |
 | webview -> host   | `addScope`         | none (host shows an input box)            |
 | webview -> host   | `fillCommit`       | full `CommitFormInput` snapshot           |
-| host -> webview   | `init`             | `{ scopes, detectedIssue }`               |
-| host -> webview   | `scopesUpdated`    | `{ scopes }`                              |
+| host -> webview   | `init`             | `{ scopes: Scope[], detectedIssue }`      |
+| host -> webview   | `scopesUpdated`    | `{ scopes: Scope[] }`                     |
 
 The host never `eval`s or otherwise trusts webview content as executable; it only reads
 plain-data fields off the `CommitFormInput` shape before passing them to `formatCommitMessage`.

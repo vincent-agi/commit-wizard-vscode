@@ -1,6 +1,6 @@
 import { formatCommitMessage } from '../core/formatCommit';
 import { titleLengthStatus } from '../core/titleLength';
-import type { CommitFormInput, CommitType } from '../core/types';
+import type { CommitFormInput, CommitType, Scope } from '../core/types';
 import type { HostToWebviewMessage, WebviewToHostMessage } from './messages';
 
 declare function acquireVsCodeApi(): {
@@ -57,16 +57,17 @@ function render(): void {
   vscode.postMessage({ type: 'formChanged', input });
 }
 
-function setScopes(scopes: string[]): void {
+function setScopes(scopes: Scope[]): void {
   const previouslySelected = scopeSelect.value;
   scopeSelect.innerHTML = '<option value="">(none)</option>';
   for (const scope of scopes) {
     const option = document.createElement('option');
-    option.value = scope;
-    option.textContent = scope;
+    option.value = scope.name;
+    option.title = scope.description;
+    option.textContent = `${scope.name} — ${scope.description}`;
     scopeSelect.appendChild(option);
   }
-  if (scopes.includes(previouslySelected)) {
+  if (scopes.some((scope) => scope.name === previouslySelected)) {
     scopeSelect.value = previouslySelected;
   }
 }

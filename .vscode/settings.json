@@ -1,18 +1,18 @@
 {
     "gitmojiCommit.scopes": [
-        "api",
-        "auth",
-        "config",
-        "core",
-        "db",
-        "deps",
-        "sec",
-        "ui",
-        "layout",
-        "i18n",
-        "styles",
-        "ci",
-        "docs",
-        "test"
+        { "name": "api", "description": "Public API surface" },
+        { "name": "auth", "description": "Authentication and authorization" },
+        { "name": "ci", "description": "Continuous integration" },
+        { "name": "config", "description": "Configuration and settings" },
+        { "name": "core", "description": "Core/shared logic" },
+        { "name": "db", "description": "Database layer" },
+        { "name": "deps", "description": "Dependency updates" },
+        { "name": "docs", "description": "Documentation" },
+        { "name": "i18n", "description": "Internationalization and translations" },
+        { "name": "layout", "description": "Page or view layout" },
+        { "name": "sec", "description": "Security-related changes" },
+        { "name": "styles", "description": "Styling and CSS" },
+        { "name": "test", "description": "Tests" },
+        { "name": "ui", "description": "User interface components" }
     ]
 }

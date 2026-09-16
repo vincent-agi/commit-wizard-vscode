@@ -25,24 +25,34 @@ opens in the sidebar.
 Scopes are project-specific and stored in the workspace's `.vscode/settings.json` under
 `gitmojiCommit.scopes`, so they can be committed and shared with your team.
 
+Each scope has a **name** and a mandatory short **description**, shown together in the dropdown
+(e.g. `webview — Webview UI and client script`) to help pick the right one.
+
 - **Predefine scopes**: add them directly in `.vscode/settings.json`:
   ```json
   {
-    "gitmojiCommit.scopes": ["webview", "parser", "ci", "docs"]
+    "gitmojiCommit.scopes": [
+      { "name": "webview", "description": "Webview UI and client script" },
+      { "name": "parser", "description": "Commit message parsing and formatting" },
+      { "name": "ci", "description": "Continuous integration" },
+      { "name": "docs", "description": "Documentation" }
+    ]
   }
   ```
-- **Add a scope from the UI**: click the **+** button next to the Scope dropdown, type the new
-  scope name in the prompt, and press Enter. It's saved to the workspace settings immediately
-  and appears in the dropdown from then on.
+- **Add a scope from the UI**: click the **+** button next to the Scope dropdown. You're prompted
+  twice — first for the scope name, then for its description; both are required, and cancelling
+  either prompt aborts without saving anything. It's saved to the workspace settings immediately
+  and appears in the dropdown from then on. Adding a scope with a name that already exists
+  replaces its description instead of creating a duplicate entry.
 
 If no workspace folder is open, the **+** button shows a warning instead of saving — open a
 folder first.
 
 ## Filling out a commit
 
-1. **Type**: pick one of the ten Conventional Commit types; each carries its Gitmoji
-   automatically (`feat` ✨, `fix` 🐛, `docs` 📝, `style` 🎨, `refactor` ♻️, `perf` ⚡, `test` 🧪,
-   `chore` 🔧, `build` 🏗️, `ci` 💚).
+1. **Type**: pick one of the ten Conventional Commit types; each carries its Gitmoji and a short
+   description automatically (`feat` ✨ "A new feature", `fix` 🐛 "A bug fix", `docs` 📝, `style` 🎨,
+   `refactor` ♻️, `perf` ⚡, `test` 🧪, `chore` 🔧, `build` 🏗️, `ci` 💚), to help pick the right one.
 2. **Scope**: optional. Pick from the dropdown or leave blank.
 3. **Issue / Ticket ID**: auto-filled from the current Git branch name when it contains a
    ticket-like token — `feature/PROJ-123-login` becomes `PROJ-123`; a plain issue number becomes
@@ -69,6 +79,6 @@ retry.
 
 | Setting | Default | Description |
 | --- | --- | --- |
-| `gitmojiCommit.scopes` | `[]` | Scopes offered in the dropdown. |
+| `gitmojiCommit.scopes` | `[]` | `{ name, description }` scopes offered in the dropdown. |
 | `gitmojiCommit.titleWarningLength` | `50` | Title length that triggers the amber warning. |
 | `gitmojiCommit.titleMaxLength` | `72` | Title length that triggers the red warning. |

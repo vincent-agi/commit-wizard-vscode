@@ -36,10 +36,20 @@
       "properties": {
         "gitmojiCommit.scopes": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string", "description": "The scope name, e.g. \"webview\"." },
+              "description": {
+                "type": "string",
+                "description": "A short explanation of when to use this scope."
+              }
+            },
+            "required": ["name", "description"]
+          },
           "default": [],
           "scope": "window",
-          "description": "Project-specific scopes offered in the scope dropdown."
+          "description": "Project-specific scopes offered in the scope dropdown, each with a short description."
         },
         "gitmojiCommit.titleWarningLength": {
           "type": "number",

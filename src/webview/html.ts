@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { GITMOJI_MAP } from '../core/types';
+import { COMMIT_TYPE_DESCRIPTIONS, GITMOJI_MAP } from '../core/types';
 import type { CommitType } from '../core/types';
 import { getStyles } from './styles';
 
@@ -27,9 +27,10 @@ export function generateNonce(): string {
 }
 
 function typeOptionsHtml(): string {
-  return TYPE_ORDER.map(
-    (type) => `<option value="${type}">${GITMOJI_MAP[type]} ${type}</option>`,
-  ).join('');
+  return TYPE_ORDER.map((type) => {
+    const description = COMMIT_TYPE_DESCRIPTIONS[type];
+    return `<option value="${type}" title="${description}">${GITMOJI_MAP[type]} ${type} — ${description}</option>`;
+  }).join('');
 }
 
 /**
