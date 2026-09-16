@@ -5,6 +5,7 @@ import type { CommitFormInput } from './types';
 const base: CommitFormInput = {
   type: 'feat',
   gitmoji: '✨',
+  issueKeyword: 'refs',
   description: 'add live preview',
   breakingChange: false,
 };
@@ -20,20 +21,44 @@ describe('formatCommitMessage', () => {
     );
   });
 
-  it('appends a "Refs: #<issue>" line to the body, not the title, when present', () => {
+  it('appends a "Refs: <issue>" line to the body, not the title, when present', () => {
     expect(formatCommitMessage({ ...base, scope: 'webview', issue: 'PROJ-123' })).toBe(
-      '✨ feat(webview): add live preview\n\n\n\nRefs: #PROJ-123\n',
+      '✨ feat(webview): add live preview\n\n\n\nRefs: PROJ-123\n',
     );
   });
 
-  it('combines an explicit body and a "Refs: #<issue>" line on the same body paragraph', () => {
+  it('combines an explicit body and a "Refs: <issue>" line on the same body paragraph', () => {
     expect(
       formatCommitMessage({
         ...base,
         body: 'Some detailed explanation.',
         issue: 'PROJ-123',
       }),
-    ).toBe('✨ feat: add live preview\n\nSome detailed explanation.\n\nRefs: #PROJ-123\n');
+    ).toBe('✨ feat: add live preview\n\nSome detailed explanation.\n\nRefs: PROJ-123\n');
+  });
+
+  it('uses the issue value verbatim, without adding its own "#" (avoids a double "##")', () => {
+    expect(formatCommitMessage({ ...base, issue: '#456' })).toBe(
+      '✨ feat: add live preview\n\n\n\nRefs: #456\n',
+    );
+  });
+
+  it('renders "Closes"/"Fixes"/"Resolves" with no colon, per GitHub/GitLab auto-close syntax', () => {
+    expect(formatCommitMessage({ ...base, issue: '#123', issueKeyword: 'closes' })).toBe(
+      '✨ feat: add live preview\n\n\n\nCloses #123\n',
+    );
+    expect(formatCommitMessage({ ...base, issue: '#123', issueKeyword: 'fixes' })).toBe(
+      '✨ feat: add live preview\n\n\n\nFixes #123\n',
+    );
+    expect(formatCommitMessage({ ...base, issue: '#123', issueKeyword: 'resolves' })).toBe(
+      '✨ feat: add live preview\n\n\n\nResolves #123\n',
+    );
+  });
+
+  it('renders "See also" with a colon, like "Refs"', () => {
+    expect(formatCommitMessage({ ...base, issue: 'PROJ-456', issueKeyword: 'seeAlso' })).toBe(
+      '✨ feat: add live preview\n\n\n\nSee also: PROJ-456\n',
+    );
   });
 
   it('uses whichever gitmoji is selected in input.gitmoji, independently of the type', () => {

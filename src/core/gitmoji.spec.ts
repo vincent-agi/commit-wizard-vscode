@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { GITMOJI_CATALOG } from './gitmoji';
-import { GITMOJI_MAP } from './types';
 
 describe('GITMOJI_CATALOG', () => {
   it('has a substantial number of entries', () => {
@@ -24,12 +23,5 @@ describe('GITMOJI_CATALOG', () => {
   it('has no duplicate codes', () => {
     const codes = GITMOJI_CATALOG.map((entry) => entry.code);
     expect(new Set(codes).size).toBe(codes.length);
-  });
-
-  it('contains every default gitmoji used by GITMOJI_MAP', () => {
-    const catalogEmojis = new Set(GITMOJI_CATALOG.map((entry) => entry.emoji));
-    for (const emoji of Object.values(GITMOJI_MAP)) {
-      expect(catalogEmojis.has(emoji)).toBe(true);
-    }
   });
 });

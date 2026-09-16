@@ -44,6 +44,9 @@ export function getStyles(): string {
     .row select {
       flex: 1;
     }
+    .row input[type='text'] {
+      flex: 2;
+    }
     button {
       background: var(--vscode-button-background);
       color: var(--vscode-button-foreground);

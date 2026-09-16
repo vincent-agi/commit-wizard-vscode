@@ -1,8 +1,14 @@
 import * as vscode from 'vscode';
 import { GITMOJI_CATALOG } from '../core/gitmoji';
-import { COMMIT_TYPE_DESCRIPTIONS, GITMOJI_MAP } from '../core/types';
-import type { CommitType } from '../core/types';
+import {
+  COMMIT_TYPE_DESCRIPTIONS,
+  ISSUE_KEYWORD_DESCRIPTIONS,
+  ISSUE_KEYWORD_LABELS,
+} from '../core/types';
+import type { CommitType, IssueKeyword } from '../core/types';
 import { getStyles } from './styles';
+
+const ISSUE_KEYWORD_ORDER: IssueKeyword[] = ['refs', 'closes', 'fixes', 'resolves', 'seeAlso'];
 
 const TYPE_ORDER: CommitType[] = [
   'feat',
@@ -30,16 +36,24 @@ export function generateNonce(): string {
 function typeOptionsHtml(): string {
   return TYPE_ORDER.map((type) => {
     const description = COMMIT_TYPE_DESCRIPTIONS[type];
-    return `<option value="${type}" title="${description}">${GITMOJI_MAP[type]} ${type} — ${description}</option>`;
+    return `<option value="${type}" title="${description}">${type} — ${description}</option>`;
+  }).join('');
+}
+
+function issueKeywordOptionsHtml(): string {
+  return ISSUE_KEYWORD_ORDER.map((keyword, index) => {
+    const label = ISSUE_KEYWORD_LABELS[keyword];
+    const description = ISSUE_KEYWORD_DESCRIPTIONS[keyword];
+    const selected = index === 0 ? ' selected' : '';
+    return `<option value="${keyword}" title="${description}"${selected}>${label} — ${description}</option>`;
   }).join('');
 }
 
 function gitmojiOptionsHtml(): string {
-  const defaultGitmoji = GITMOJI_MAP[TYPE_ORDER[0]];
-  return GITMOJI_CATALOG.map(({ emoji, code, description }) => {
-    const selected = emoji === defaultGitmoji ? ' selected' : '';
-    return `<option value="${emoji}" title="${description}"${selected}>${emoji} ${code} — ${description}</option>`;
-  }).join('');
+  return GITMOJI_CATALOG.map(
+    ({ emoji, code, description }) =>
+      `<option value="${emoji}" title="${description}">${emoji} ${code} — ${description}</option>`,
+  ).join('');
 }
 
 /**
@@ -82,7 +96,10 @@ export function generateHtml(webview: vscode.Webview, extensionUri: vscode.Uri):
   </div>
 
   <label for="issue">Issue / Ticket ID</label>
-  <input type="text" id="issue" placeholder="PROJ-123" />
+  <div class="row">
+    <select id="issueKeyword">${issueKeywordOptionsHtml()}</select>
+    <input type="text" id="issue" placeholder="PROJ-123" />
+  </div>
 
   <label for="description">Short description</label>
   <input type="text" id="description" placeholder="add live preview component" />

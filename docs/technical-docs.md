@@ -12,7 +12,7 @@ the result into the built-in Git extension's commit input box.
 ```
 src/
   core/                     # Pure logic, zero dependency on `vscode`. 100% unit-testable.
-    types.ts                # CommitType, CommitFormInput, Scope, GITMOJI_MAP, COMMIT_TYPE_DESCRIPTIONS
+    types.ts                # CommitType, CommitFormInput, Scope, IssueKeyword, COMMIT_TYPE_DESCRIPTIONS
     gitmoji.ts              # GITMOJI_CATALOG: the full official Gitmoji list (gitmoji.dev)
     formatCommit.ts         # formatCommitMessage(input) -> string
     branchIssueExtractor.ts # extractIssueFromBranch(branchName) -> string | undefined
@@ -46,24 +46,28 @@ Builds the final commit message string:
 
 <body>
 
-Refs: #<issue>
+<IssueKeywordLabel>[:] <issue>
 
 BREAKING CHANGE: <breakingChangeDescription>
 ```
 
-- `gitmoji` is a plain string field on `CommitFormInput`, not derived from `type` — the webview's
-  Gitmoji dropdown lets it be any entry from the full `GITMOJI_CATALOG` (see below), not just the
-  type's default. `formatCommitMessage` uses `input.gitmoji` verbatim.
+- `gitmoji` is a plain string field on `CommitFormInput`, fully independent of `type` — the
+  webview's Gitmoji dropdown (populated from `GITMOJI_CATALOG`, see below) is the sole source of
+  truth for it. Picking a Type never changes the selected gitmoji, and vice versa.
+  `formatCommitMessage` uses `input.gitmoji` verbatim.
 - `scope` is optional — when absent, the parens are omitted (`<gitmoji> <type>: ...`).
-- The body paragraph is always emitted, even when `body` is empty — `body` and the `issue`'s
-  `Refs: #<issue>` line are joined with a blank line inside that one paragraph, so a commit with
-  neither still has an (empty-looking) second paragraph.
+- The body paragraph is always emitted, even when `body` is empty — `body` and the issue footer
+  line are joined with a blank line inside that one paragraph, so a commit with neither still has
+  an (empty-looking) second paragraph.
+- The issue footer line's keyword comes from `input.issueKeyword` (an `IssueKeyword`: `closes`,
+  `fixes`, `resolves`, `refs`, or `seeAlso`), formatted by `formatIssueLine` in `formatCommit.ts`:
+  `closes`/`fixes`/`resolves` render as `"<Label> <issue>"` (no colon — the exact syntax
+  GitHub/GitLab require to auto-close an issue on merge), `refs`/`seeAlso` render as
+  `"<Label>: <issue>"`. `issue` is used verbatim, with no `#` added — it may already carry one
+  (from `extractIssueFromBranch`'s bare-number case) or not (a Jira-style key), and adding one
+  unconditionally used to produce a `##123` double-hash for the former.
 - The `BREAKING CHANGE:` footer is only emitted when `breakingChange` is `true` **and**
   `breakingChangeDescription` is non-empty.
-- `GITMOJI_MAP` in `types.ts` gives each `CommitType` a *default* gitmoji
-  (`feat`->✨, `fix`->🐛, `docs`->📝, `style`->🎨, `refactor`->♻️, `perf`->⚡️, `test`->🧪,
-  `chore`->🔧, `build`->🏗️, `ci`->💚) — used only to pre-fill the Gitmoji dropdown when Type
-  changes, not to constrain the final message.
 
 ### `extractIssueFromBranch(branchName: string): string | undefined`
 
@@ -95,11 +99,11 @@ can rely on this as the single source of truth for what counts as a valid scope.
 ### `GITMOJI_CATALOG: readonly GitmojiEntry[]`
 
 The full official [Gitmoji](https://gitmoji.dev/) list (~75 entries), each an
-`{ emoji, code, description }`. Populates the Gitmoji dropdown independently of the Type
-dropdown's 10 Conventional Commit keywords — most entries (e.g. `:fire:` "Remove code or
-files") don't correspond to any single Conventional Commit `type`. `gitmoji.spec.ts` guards its
-shape (non-empty fields, `:snake_case:` codes, no duplicate codes) and cross-checks that every
-`GITMOJI_MAP` default is present in the catalog.
+`{ emoji, code, description }`. Populates the Gitmoji dropdown, which is completely independent
+of the Type dropdown's 10 Conventional Commit keywords — most entries (e.g. `:fire:` "Remove
+code or files") don't correspond to any single Conventional Commit `type`, and picking a Type
+never changes the selected gitmoji. `gitmoji.spec.ts` guards the catalog's shape (non-empty
+fields, `:snake_case:` codes, no duplicate codes).
 
 ### `titleLengthStatus(title, warnAt, maxAt): 'ok' | 'warn' | 'over'`
 

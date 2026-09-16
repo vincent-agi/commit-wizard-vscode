@@ -1,7 +1,6 @@
 import { formatCommitMessage } from '../core/formatCommit';
 import { titleLengthStatus } from '../core/titleLength';
-import { GITMOJI_MAP } from '../core/types';
-import type { CommitFormInput, CommitType, Scope } from '../core/types';
+import type { CommitFormInput, CommitType, IssueKeyword, Scope } from '../core/types';
 import type { HostToWebviewMessage, WebviewToHostMessage } from './messages';
 
 declare function acquireVsCodeApi(): {
@@ -14,6 +13,7 @@ const typeSelect = document.getElementById('type') as HTMLSelectElement;
 const gitmojiSelect = document.getElementById('gitmoji') as HTMLSelectElement;
 const scopeSelect = document.getElementById('scope') as HTMLSelectElement;
 const addScopeButton = document.getElementById('addScope') as HTMLButtonElement;
+const issueKeywordSelect = document.getElementById('issueKeyword') as HTMLSelectElement;
 const issueInput = document.getElementById('issue') as HTMLInputElement;
 const descriptionInput = document.getElementById('description') as HTMLInputElement;
 const charCounter = document.getElementById('charCounter') as HTMLDivElement;
@@ -37,6 +37,7 @@ function currentInput(): CommitFormInput {
     gitmoji: gitmojiSelect.value,
     scope: scopeSelect.value || undefined,
     issue: issueInput.value || undefined,
+    issueKeyword: issueKeywordSelect.value as IssueKeyword,
     description: descriptionInput.value,
     body: bodyTextarea.value || undefined,
     breakingChange: breakingChangeCheckbox.checked,
@@ -76,8 +77,10 @@ function setScopes(scopes: Scope[]): void {
 }
 
 for (const element of [
+  typeSelect,
   gitmojiSelect,
   scopeSelect,
+  issueKeywordSelect,
   issueInput,
   descriptionInput,
   bodyTextarea,
@@ -87,14 +90,6 @@ for (const element of [
   element.addEventListener('input', render);
   element.addEventListener('change', render);
 }
-
-typeSelect.addEventListener('change', () => {
-  const defaultGitmoji = GITMOJI_MAP[typeSelect.value as CommitType];
-  if (defaultGitmoji) {
-    gitmojiSelect.value = defaultGitmoji;
-  }
-  render();
-});
 
 addScopeButton.addEventListener('click', () => {
   vscode.postMessage({ type: 'addScope' });

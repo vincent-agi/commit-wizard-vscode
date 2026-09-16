@@ -52,16 +52,21 @@ folder first.
 
 1. **Type**: pick one of the ten Conventional Commit types; each shows a short description
    automatically (`feat` "A new feature", `fix` "A bug fix", `docs`, `style`, `refactor`, `perf`,
-   `test`, `chore`, `build`, `ci`), to help pick the right one.
-2. **Gitmoji**: a separate dropdown listing the full
+   `test`, `chore`, `build`, `ci`), to help pick the right one. This dropdown carries no gitmoji
+   of its own.
+2. **Gitmoji**: a fully independent dropdown listing the full
    [official Gitmoji catalog](https://gitmoji.dev/) (~75 entries, each with its own
-   description). Changing **Type** resets this to that type's default gitmoji (e.g. `feat` →
-   ✨), but you can freely pick any other gitmoji afterward — your choice is what actually
-   prefixes the commit message, independently of the Type keyword.
+   description). It is the sole source of truth for the emoji prefixing the commit message —
+   picking a Type does not change it, and picking a gitmoji does not change the Type.
 3. **Scope**: optional. Pick from the dropdown or leave blank.
 4. **Issue / Ticket ID**: auto-filled from the current Git branch name when it contains a
    ticket-like token — `feature/PROJ-123-login` becomes `PROJ-123`; a plain issue number becomes
-   `#123`. Edit or clear it freely; it is only ever a starting suggestion.
+   `#123`. Edit or clear it freely; it is only ever a starting suggestion. A dropdown next to it
+   picks the GitHub/GitLab footer keyword: **Refs** (default, just links the issue), **Closes**,
+   **Fixes**, **Resolves** (any of these three auto-closes the issue when the commit is merged),
+   or **See also** (links a related issue without closing it). The issue value is used exactly as
+   typed — no `#` is added automatically, so a Jira-style key like `PROJ-123` isn't mangled and a
+   branch-detected `#456` doesn't turn into `##456`.
 5. **Short description**: the one-line summary. A live character counter turns amber past 50
    characters and red past 72 (both thresholds are configurable, see below).
 6. **Body**: optional multi-line details, rendered as its own paragraph.

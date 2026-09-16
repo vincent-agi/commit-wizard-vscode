@@ -12,25 +12,6 @@ export type CommitType =
   | 'ci';
 
 /**
- * Maps each {@link CommitType} to its default Gitmoji glyph. Used only to pre-fill the
- * Gitmoji dropdown when the Type changes — the actual commit message uses whichever gitmoji
- * is selected in {@link CommitFormInput.gitmoji}, which may differ (see the full
- * {@link GITMOJI_CATALOG "gitmoji.ts" catalog}).
- */
-export const GITMOJI_MAP: Record<CommitType, string> = {
-  feat: '✨',
-  fix: '🐛',
-  docs: '📝',
-  style: '🎨',
-  refactor: '♻️',
-  perf: '⚡️',
-  test: '🧪',
-  chore: '🔧',
-  build: '🏗️',
-  ci: '💚',
-};
-
-/**
  * Short, one-line explanation of each {@link CommitType}, shown next to the type in the
  * dropdown to help pick the right one.
  */
@@ -53,6 +34,31 @@ export interface Scope {
   description: string;
 }
 
+/**
+ * A GitHub/GitLab-recognized issue-reference keyword for the commit footer.
+ * `closes`/`fixes`/`resolves` auto-close the referenced issue on merge; `refs`/`seeAlso` only
+ * link it.
+ */
+export type IssueKeyword = 'closes' | 'fixes' | 'resolves' | 'refs' | 'seeAlso';
+
+/** Display label for each {@link IssueKeyword}, as it appears in the footer line. */
+export const ISSUE_KEYWORD_LABELS: Record<IssueKeyword, string> = {
+  closes: 'Closes',
+  fixes: 'Fixes',
+  resolves: 'Resolves',
+  refs: 'Refs',
+  seeAlso: 'See also',
+};
+
+/** One-line explanation of each {@link IssueKeyword}, shown in the dropdown. */
+export const ISSUE_KEYWORD_DESCRIPTIONS: Record<IssueKeyword, string> = {
+  closes: 'Auto-closes the issue when this commit is merged (GitHub/GitLab)',
+  fixes: 'Auto-closes the issue when this commit is merged (GitHub/GitLab)',
+  resolves: 'Auto-closes the issue when this commit is merged (GitHub/GitLab)',
+  refs: 'Links the issue without closing it',
+  seeAlso: 'Links a related issue or ticket without closing it',
+};
+
 /** All fields collected from the commit builder form. */
 export interface CommitFormInput {
   type: CommitType;
@@ -60,6 +66,8 @@ export interface CommitFormInput {
   gitmoji: string;
   scope?: string;
   issue?: string;
+  /** Which footer keyword to prefix `issue` with. Only meaningful when `issue` is set. */
+  issueKeyword: IssueKeyword;
   description: string;
   body?: string;
   breakingChange: boolean;
