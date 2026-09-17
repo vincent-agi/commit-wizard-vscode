@@ -10,8 +10,8 @@ const KEYWORD_NUMBER = /\b(?:issue|bug|gh|fix)-?(\d+)\b/i;
  * then a bare number following `issue`, `bug`, `gh`, or `fix`. A key whose letter part is
  * itself one of those keywords (e.g. `GH-789`) is treated as a keyword match, not Jira.
  *
- * @param branchName - The current branch name (e.g. `feature/PROJ-123-login`).
- * @returns The normalized issue token (`PROJ-123` or `#123`), or `undefined` when none is found.
+ * @param branchName - The current branch name (e.g. `feature/123-login`).
+ * @returns The normalized issue token (`123` or `#123`), or `undefined` when none is found.
  */
 export function extractIssueFromBranch(branchName: string): string | undefined {
   const jiraMatch = branchName.match(JIRA_STYLE);

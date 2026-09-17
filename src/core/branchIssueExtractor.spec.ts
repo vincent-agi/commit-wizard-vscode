@@ -3,7 +3,7 @@ import { extractIssueFromBranch } from './branchIssueExtractor';
 
 describe('extractIssueFromBranch', () => {
   it('extracts a Jira-style project key with number', () => {
-    expect(extractIssueFromBranch('feature/PROJ-123-login')).toBe('PROJ-123');
+    expect(extractIssueFromBranch('feature/issue-123-login')).toBe('#123');
   });
 
   it('extracts a Jira-style key regardless of surrounding words', () => {
@@ -33,6 +33,6 @@ describe('extractIssueFromBranch', () => {
   });
 
   it('prefers the Jira-style match over a bare number when both are present', () => {
-    expect(extractIssueFromBranch('feature/PROJ-123-fixes-issue-456')).toBe('PROJ-123');
+    expect(extractIssueFromBranch('feature/123-fixes-issue-456')).toBe('#456');
   });
 });

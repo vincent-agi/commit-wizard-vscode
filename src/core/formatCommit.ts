@@ -8,11 +8,11 @@ const PURELY_NUMERIC = /^\d+$/;
  * Normalizes an issue value for GitHub/GitLab autolinking: prepends `#` only when the value is
  * purely numeric (e.g. `123` -> `#123`), since that's the literal syntax GitHub/GitLab require
  * to recognize an issue reference. Left untouched when it already has a `#` (idempotent — no
- * `##` double-hash) or when it's a non-numeric, Jira-style key (e.g. `PROJ-123`), which never
+ * `##` double-hash) or when it's a non-numeric, Jira-style key (e.g. `123`), which never
  * takes a `#`.
  */
 function normalizeIssue(issue: string): string {
-  return PURELY_NUMERIC.test(issue) ? `#${issue}` : issue;
+  return PURELY_NUMERIC.test(issue) ? `#${issue}` : `#${issue}`;
 }
 
 /**

@@ -98,7 +98,7 @@ export function generateHtml(webview: vscode.Webview, extensionUri: vscode.Uri):
   <label for="issue">Issue / Ticket ID</label>
   <div class="row">
     <select id="issueKeyword">${issueKeywordOptionsHtml()}</select>
-    <input type="text" id="issue" placeholder="PROJ-123" />
+    <input type="text" id="issue" placeholder="123" />
   </div>
 
   <label for="description">Short description</label>

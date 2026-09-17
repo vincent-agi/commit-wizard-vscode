@@ -67,7 +67,7 @@ BREAKING CHANGE: <breakingChangeDescription>
   prepends `#` only when the value is purely numeric (`123` -> `#123` — GitHub/GitLab only
   recognize the hashed form) and leaves it untouched otherwise: already-hashed (`#456`, from
   `extractIssueFromBranch`'s bare-number case — avoids a `##` double-hash) or a non-numeric,
-  Jira-style key (`PROJ-123`, which never takes a `#`).
+  Jira-style key (`123`, which never takes a `#`).
 - The `BREAKING CHANGE:` footer is only emitted when `breakingChange` is `true` **and**
   `breakingChangeDescription` is non-empty.
 
@@ -75,13 +75,13 @@ BREAKING CHANGE: <breakingChangeDescription>
 
 Scans a branch name for the first ticket-like token and returns it normalized:
 
-- `feature/PROJ-123-login` -> `PROJ-123`
+- `feature/123-login` -> `123`
 - `bugfix/issue-456` -> `#456` (no project-key prefix, falls back to `#<number>`)
 - `main`, `develop`, or a branch with no numeric/ticket token -> `undefined`
 
 Matching rules, in order of precedence:
 
-1. `[A-Z][A-Z0-9]+-\d+` (Jira-style project key, e.g. `PROJ-123`, `ABC12-7`).
+1. `[A-Z][A-Z0-9]+-\d+` (Jira-style project key, e.g. `123`, `ABC12-7`).
 2. `#(\d+)` (an explicit issue-hash token already in the branch name).
 3. A bare `\d+` following the words `issue`, `bug`, `gh`, or `fix` (case-insensitive), returned
    as `#<number>`.

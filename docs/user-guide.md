@@ -60,12 +60,12 @@ folder first.
    picking a Type does not change it, and picking a gitmoji does not change the Type.
 3. **Scope**: optional. Pick from the dropdown or leave blank.
 4. **Issue / Ticket ID**: auto-filled from the current Git branch name when it contains a
-   ticket-like token — `feature/PROJ-123-login` becomes `PROJ-123`; a plain issue number becomes
+   ticket-like token — `feature/123-login` becomes `123`; a plain issue number becomes
    `#123`. Edit or clear it freely; it is only ever a starting suggestion. A dropdown next to it
    picks the GitHub/GitLab footer keyword: **Refs** (default, just links the issue), **Closes**,
    **Fixes**, **Resolves** (any of these three auto-closes the issue when the commit is merged),
    or **See also** (links a related issue without closing it). The issue value is used exactly as
-   typed — no `#` is added automatically, so a Jira-style key like `PROJ-123` isn't mangled and a
+   typed — no `#` is added automatically, so a Jira-style key like `123` isn't mangled and a
    branch-detected `#456` doesn't turn into `##456`.
 5. **Short description**: the one-line summary. A live character counter turns amber past 50
    characters and red past 72 (both thresholds are configurable, see below).
