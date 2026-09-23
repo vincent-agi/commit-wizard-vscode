@@ -120,7 +120,7 @@ export function generateHtml(webview: vscode.Webview, extensionUri: vscode.Uri):
   <label>Preview</label>
   <div id="preview"></div>
 
-  <button type="button" id="fillCommit">Fill Commit</button>
+  <button type="button" id="commitNow">Commit now</button>
 
   <script nonce="${nonce}" src="${scriptUri}"></script>
 </body>

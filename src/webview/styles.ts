@@ -67,7 +67,7 @@ export function getStyles(): string {
     button.secondary:hover {
       background: var(--vscode-button-secondaryHoverBackground);
     }
-    #fillCommit {
+    #commitNow {
       width: 100%;
       margin-top: 14px;
       padding: 6px;

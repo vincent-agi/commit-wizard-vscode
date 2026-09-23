@@ -5,7 +5,7 @@ export type WebviewToHostMessage =
   | { type: 'ready' }
   | { type: 'formChanged'; input: CommitFormInput }
   | { type: 'addScope' }
-  | { type: 'fillCommit'; input: CommitFormInput };
+  | { type: 'commitNow'; input: CommitFormInput };
 
 /** Message shape sent from the extension host to the webview client. */
 export type HostToWebviewMessage =

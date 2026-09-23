@@ -26,7 +26,7 @@ const breakingChangeDescriptionTextarea = document.getElementById(
   'breakingChangeDescription',
 ) as HTMLTextAreaElement;
 const previewBox = document.getElementById('preview') as HTMLDivElement;
-const fillCommitButton = document.getElementById('fillCommit') as HTMLButtonElement;
+const commitNowButton = document.getElementById('commitNow') as HTMLButtonElement;
 
 const TITLE_WARN_AT = 50;
 const TITLE_MAX_AT = 72;
@@ -95,8 +95,8 @@ addScopeButton.addEventListener('click', () => {
   vscode.postMessage({ type: 'addScope' });
 });
 
-fillCommitButton.addEventListener('click', () => {
-  vscode.postMessage({ type: 'fillCommit', input: currentInput() });
+commitNowButton.addEventListener('click', () => {
+  vscode.postMessage({ type: 'commitNow', input: currentInput() });
 });
 
 window.addEventListener('message', (event: MessageEvent<HostToWebviewMessage>) => {

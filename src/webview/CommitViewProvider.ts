@@ -3,7 +3,7 @@ import { extractIssueFromBranch } from '../core/branchIssueExtractor';
 import { formatCommitMessage } from '../core/formatCommit';
 import { addScope } from '../core/scopeConfig';
 import type { Scope } from '../core/types';
-import { fillCommitInputBox, getCurrentBranchName } from '../git/gitExtension';
+import { commitActiveRepository, getCurrentBranchName } from '../git/gitExtension';
 import { generateHtml } from './html';
 import type { HostToWebviewMessage, WebviewToHostMessage } from './messages';
 
@@ -21,8 +21,8 @@ async function writeScopes(scopes: Scope[]): Promise<void> {
 
 /**
  * Registers and drives the "Commit Builder" sidebar webview: renders the form, keeps the
- * scope list in sync with workspace configuration, and injects the composed commit message
- * into the active Git repository's input box.
+ * scope list in sync with workspace configuration, and commits the composed message to the
+ * active Git repository.
  */
 export class CommitViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'gitmojiCommit.commitView';
@@ -54,8 +54,8 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
       case 'addScope':
         await this.addScope(webview);
         return;
-      case 'fillCommit':
-        this.fillCommit(message.input);
+      case 'commitNow':
+        await this.commitNow(message.input);
         return;
     }
   }
@@ -112,14 +112,19 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
     this.postMessage(webview, { type: 'scopesUpdated', scopes: updatedScopes });
   }
 
-  private fillCommit(input: Parameters<typeof formatCommitMessage>[0]): void {
+  private async commitNow(input: Parameters<typeof formatCommitMessage>[0]): Promise<void> {
     const message = formatCommitMessage(input);
-    const filled = fillCommitInputBox(message);
 
-    if (!filled) {
-      vscode.window.showWarningMessage(
-        'No active Git repository found. Open a folder with a Git repository to fill its commit message.',
-      );
+    try {
+      const committed = await commitActiveRepository(message);
+      if (!committed) {
+        vscode.window.showWarningMessage(
+          'No active Git repository found. Open a folder with a Git repository to commit.',
+        );
+      }
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      vscode.window.showErrorMessage(`Commit failed: ${reason}`);
     }
   }
 

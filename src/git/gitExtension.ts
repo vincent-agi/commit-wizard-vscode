@@ -6,8 +6,8 @@ interface GitApi {
 }
 
 interface GitRepository {
-  inputBox: { value: string };
   state: { HEAD?: { name?: string } };
+  commit(message: string): Promise<void>;
 }
 
 interface GitExtensionExports {
@@ -25,17 +25,19 @@ export function getActiveRepository(): GitRepository | undefined {
 }
 
 /**
- * Writes `message` into the active repository's Source Control input box.
+ * Stages the active repository's changes and commits them with `message`.
  *
- * @returns `true` when a repository was found and updated, `false` otherwise.
+ * @returns `true` when a repository was found and the commit succeeded, `false` when no
+ * repository is open. Errors from the underlying `commit` call (e.g. nothing staged) propagate
+ * to the caller.
  */
-export function fillCommitInputBox(message: string): boolean {
+export async function commitActiveRepository(message: string): Promise<boolean> {
   const repo = getActiveRepository();
   if (!repo) {
     return false;
   }
 
-  repo.inputBox.value = message;
+  await repo.commit(message);
   return true;
 }
 
