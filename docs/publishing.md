@@ -72,13 +72,27 @@ calls don't ask again.
 
 When the Release Please PR is merged, `.github/workflows/release-please.yml` runs after the
 release is created: `verify-build` (compile) -> `package` (builds the `.vsix`, uploads it as a
-workflow artifact and attaches it to the GitHub release) -> `publish-marketplace`.
+workflow artifact and attaches it to the GitHub release) -> `publish-marketplace` and `publish-openvsx` (the two publish jobs are independent: one failing
+does not block the other).
 
 One-time setup: create the Marketplace PAT as described above, then add it as the repository
 secret **`VSCE_PAT`** (Settings > Secrets and variables > Actions). When the secret is missing the
 publish job logs a notice and succeeds without publishing, so forks and the first setup do not
 fail. The token is only exposed to the publish step as an environment variable and is masked in
 logs. Check the Marketplace listing after the first automated run.
+
+### Open VSX (VSCodium, Gitpod, Cursor, ...)
+
+The Marketplace terms restrict its use to Microsoft products; forks install from
+[open-vsx.org](https://open-vsx.org). One-time setup:
+
+1. Sign in to open-vsx.org with GitHub and sign the Publisher Agreement.
+2. Create the namespace once: `npx ovsx create-namespace vincent-agi --pat <token>`.
+3. Create an access token in your Open VSX profile and add it as the repository secret
+   **`OVSX_PAT`**.
+
+As for the Marketplace, a missing secret only logs a notice. The same `.vsix` built for the
+Marketplace is published, so both registries always carry the same version.
 
 ## Publishing a release (manual)
 

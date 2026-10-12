@@ -95,3 +95,25 @@ jobs:
             exit 0
           fi
           npx --no -- vsce publish --packagePath commit-wizard-vscode.vsix
+
+  publish-openvsx:
+    needs: package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: vsix
+
+      - name: Publish to Open VSX
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          if [ -z "$OVSX_PAT" ]; then
+            echo "::notice::OVSX_PAT is not set; skipping the Open VSX publish."
+            exit 0
+          fi
+          npx --yes ovsx publish commit-wizard-vscode.vsix --pat "$OVSX_PAT"
