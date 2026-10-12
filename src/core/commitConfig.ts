@@ -3,6 +3,7 @@ import { ISSUE_TRACKER_PRESETS } from './issueTracker';
 import type { IssueTrackerConfig, IssueTrackerPreset } from './issueTracker';
 import type { SuggestionRule } from './suggest';
 import type { DefaultCommitType, Scope } from './types';
+import { t } from '../i18n';
 
 /** A commit type offered in the Type dropdown. */
 export interface CommitTypeConfig {
@@ -89,7 +90,7 @@ function nonEmptyString(value: unknown): string | undefined {
 
 function parseTypes(raw: unknown, errors: string[]): CommitTypeConfig[] | undefined {
   if (!Array.isArray(raw)) {
-    errors.push('"types" must be an array.');
+    errors.push(t('config.err.typesArray'));
     return undefined;
   }
 
@@ -97,15 +98,15 @@ function parseTypes(raw: unknown, errors: string[]): CommitTypeConfig[] | undefi
   raw.forEach((item, index) => {
     const name = isRecord(item) ? nonEmptyString(item.name) : undefined;
     if (!name) {
-      errors.push(`types[${index}]: "name" is required.`);
+      errors.push(t('config.err.typeNameRequired', index));
       return;
     }
     if (!TYPE_NAME.test(name)) {
-      errors.push(`types[${index}]: "${name}" is not a valid type name (letters, digits, - or _).`);
+      errors.push(t('config.err.typeNameInvalid', index, name));
       return;
     }
     if (types.some((type) => type.name === name)) {
-      errors.push(`types[${index}]: duplicate type "${name}".`);
+      errors.push(t('config.err.typeDuplicate', index, name));
       return;
     }
     const record = item as Record<string, unknown>;
@@ -122,7 +123,7 @@ function parseTypes(raw: unknown, errors: string[]): CommitTypeConfig[] | undefi
 
 function parseScopes(raw: unknown, errors: string[]): Scope[] | undefined {
   if (!Array.isArray(raw)) {
-    errors.push('"scopes" must be an array.');
+    errors.push(t('config.err.scopesArray'));
     return undefined;
   }
 
@@ -131,7 +132,7 @@ function parseScopes(raw: unknown, errors: string[]): Scope[] | undefined {
     const name = isRecord(item) ? nonEmptyString(item.name) : undefined;
     const description = isRecord(item) ? nonEmptyString(item.description) : undefined;
     if (!name || !description) {
-      errors.push(`scopes[${index}]: "name" and "description" are required.`);
+      errors.push(t('config.err.scopeFields', index));
       return;
     }
     if (!scopes.some((scope) => scope.name === name)) {
@@ -144,7 +145,7 @@ function parseScopes(raw: unknown, errors: string[]): Scope[] | undefined {
 
 function parseLength(raw: unknown, key: string, errors: string[]): number | undefined {
   if (typeof raw !== 'number' || !Number.isInteger(raw) || raw <= 0) {
-    errors.push(`"${key}" must be a positive integer.`);
+    errors.push(t('config.err.positiveInt', key));
     return undefined;
   }
   return raw;
@@ -163,7 +164,7 @@ export function parseConfigLayer(raw: unknown): { layer: ConfigLayer; errors: st
   const layer: ConfigLayer = {};
 
   if (!isRecord(raw)) {
-    return { layer, errors: ['The configuration must be a JSON object.'] };
+    return { layer, errors: [t('config.err.notObject')] };
   }
 
   if (Array.isArray(raw.types) && raw.types.length === 0) {
@@ -188,7 +189,7 @@ export function parseConfigLayer(raw: unknown): { layer: ConfigLayer; errors: st
     if (typeof raw.emojis === 'boolean') {
       layer.emojis = raw.emojis;
     } else {
-      errors.push('"emojis" must be true or false.');
+      errors.push(t('config.err.emojisBool'));
     }
   }
 
@@ -196,7 +197,7 @@ export function parseConfigLayer(raw: unknown): { layer: ConfigLayer; errors: st
     if (raw.emojiPosition === 'before' || raw.emojiPosition === 'after') {
       layer.emojiPosition = raw.emojiPosition;
     } else {
-      errors.push('"emojiPosition" must be "before" or "after".');
+      errors.push(t('config.err.emojiPosition'));
     }
   }
 
@@ -212,13 +213,13 @@ export function parseConfigLayer(raw: unknown): { layer: ConfigLayer; errors: st
   if (raw.issuePattern !== undefined) {
     const pattern = nonEmptyString(raw.issuePattern);
     if (!pattern) {
-      errors.push('"issuePattern" must be a non-empty string.');
+      errors.push(t('config.err.issuePatternEmpty'));
     } else {
       try {
         new RegExp(pattern);
         layer.issuePattern = pattern;
       } catch {
-        errors.push(`"issuePattern" is not a valid regular expression: ${pattern}`);
+        errors.push(t('config.err.issuePatternRegex', pattern));
       }
     }
   }
@@ -233,13 +234,13 @@ export function parseConfigLayer(raw: unknown): { layer: ConfigLayer; errors: st
         .map((entry: string) => entry.trim())
         .filter(Boolean);
     } else {
-      errors.push('"protectedBranches" must be an array of strings.');
+      errors.push(t('config.err.protectedBranches'));
     }
   }
 
   if (raw.suggestionRules !== undefined) {
     if (!Array.isArray(raw.suggestionRules)) {
-      errors.push('"suggestionRules" must be an array.');
+      errors.push(t('config.err.suggestionRulesArray'));
     } else {
       const rules: SuggestionRule[] = [];
       raw.suggestionRules.forEach((item, index) => {
@@ -247,7 +248,7 @@ export function parseConfigLayer(raw: unknown): { layer: ConfigLayer; errors: st
         const type = isRecord(item) ? nonEmptyString(item.type) : undefined;
         const scope = isRecord(item) ? nonEmptyString(item.scope) : undefined;
         if (!glob || (!type && !scope)) {
-          errors.push(`suggestionRules[${index}]: "glob" and a "type" or "scope" are required.`);
+          errors.push(t('config.err.suggestionRule', index));
           return;
         }
         rules.push({ glob, ...(type ? { type } : {}), ...(scope ? { scope } : {}) });
@@ -266,9 +267,9 @@ export function parseConfigLayer(raw: unknown): { layer: ConfigLayer; errors: st
       typeof preset !== 'string' ||
       !ISSUE_TRACKER_PRESETS.includes(preset as IssueTrackerPreset)
     ) {
-      errors.push(`"issueTracker.preset" must be one of: ${ISSUE_TRACKER_PRESETS.join(', ')}.`);
+      errors.push(t('config.err.trackerPreset', ISSUE_TRACKER_PRESETS.join(', ')));
     } else if (baseUrl !== undefined && !/^https?:\/\//i.test(baseUrl)) {
-      errors.push('"issueTracker.baseUrl" must start with http:// or https://.');
+      errors.push(t('config.err.trackerBaseUrl'));
     } else {
       layer.issueTracker = {
         preset: preset as IssueTrackerPreset,
@@ -282,7 +283,7 @@ export function parseConfigLayer(raw: unknown): { layer: ConfigLayer; errors: st
     if (template && /^https?:\/\//i.test(template) && template.includes('{id}')) {
       layer.issueUrlTemplate = template;
     } else {
-      errors.push('"issueUrlTemplate" must be an http(s) URL containing {id}.');
+      errors.push(t('config.err.issueUrlTemplate'));
     }
   }
 
@@ -291,7 +292,7 @@ export function parseConfigLayer(raw: unknown): { layer: ConfigLayer; errors: st
     if (pattern && pattern.includes('{slug}')) {
       layer.branchPattern = pattern;
     } else {
-      errors.push('"branchPattern" must be a string containing {slug}.');
+      errors.push(t('config.err.branchPattern'));
     }
   }
 
@@ -300,7 +301,7 @@ export function parseConfigLayer(raw: unknown): { layer: ConfigLayer; errors: st
     if (template) {
       layer.prTemplate = template;
     } else {
-      errors.push('"prTemplate" must be a non-empty string.');
+      errors.push(t('config.err.prTemplate'));
     }
   }
 
@@ -308,7 +309,7 @@ export function parseConfigLayer(raw: unknown): { layer: ConfigLayer; errors: st
     if (typeof raw.aiDraft === 'boolean') {
       layer.aiDraft = raw.aiDraft;
     } else {
-      errors.push('"aiDraft" must be true or false.');
+      errors.push(t('config.err.aiDraft'));
     }
   }
 
@@ -317,7 +318,7 @@ export function parseConfigLayer(raw: unknown): { layer: ConfigLayer; errors: st
     if (template) {
       layer.issueTemplate = template;
     } else {
-      errors.push('"issueTemplate" must be a non-empty string.');
+      errors.push(t('config.err.issueTemplate'));
     }
   }
 
@@ -394,9 +395,7 @@ export function resolveConfig(layers: readonly ConfigLayer[]): {
   config.scopes = [...scopesByName.values()].sort((a, b) => a.name.localeCompare(b.name));
 
   if (config.titleWarningLength > config.titleMaxLength) {
-    errors.push(
-      `titleWarningLength (${config.titleWarningLength}) is above titleMaxLength (${config.titleMaxLength}); using the defaults.`,
-    );
+    errors.push(t('config.err.thresholds', config.titleWarningLength, config.titleMaxLength));
     config.titleWarningLength = DEFAULT_CONFIG.titleWarningLength;
     config.titleMaxLength = DEFAULT_CONFIG.titleMaxLength;
   }

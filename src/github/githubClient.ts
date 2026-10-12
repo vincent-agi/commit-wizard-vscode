@@ -1,6 +1,7 @@
 import type { GitHubRepo } from '../core/githubRemote';
 import { summarizeCheckRuns } from '../core/releasePr';
 import type { CheckRunSummary, ReleasePrCandidate } from '../core/releasePr';
+import { t } from '../i18n';
 
 /** Error raised for a failed GitHub API call, with a message fit to show the user. */
 export class GitHubError extends Error {
@@ -31,17 +32,17 @@ function explain(status: number, apiMessage: string | undefined, repo: GitHubRep
   const slug = `${repo.owner}/${repo.repo}`;
   switch (status) {
     case 401:
-      return 'GitHub rejected the credentials. Sign in again and retry.';
+      return t('github.401');
     case 403:
-      return `Not allowed to do this on ${slug}. Check that your account has write access and that the token has the "repo" scope.`;
+      return t('github.403', slug);
     case 404:
-      return `Repository ${slug} not found, or your account cannot access it.`;
+      return t('github.404', slug);
     case 410:
-      return `Issues are disabled on ${slug}.`;
+      return t('github.410', slug);
     case 422:
-      return `GitHub refused the data${apiMessage ? `: ${apiMessage}` : '.'}`;
+      return t('github.422', apiMessage ? `: ${apiMessage}` : '.');
     default:
-      return `GitHub request failed (HTTP ${status})${apiMessage ? `: ${apiMessage}` : '.'}`;
+      return t('github.other', status, apiMessage ? `: ${apiMessage}` : '.');
   }
 }
 
@@ -75,7 +76,7 @@ export function createGitHubClient(
       });
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
-      throw new GitHubError(`Could not reach GitHub (${reason}). Check your network connection.`);
+      throw new GitHubError(t('github.network', reason));
     }
 
     if (!response.ok) {

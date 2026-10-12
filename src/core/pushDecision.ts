@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 /** What the amend and push logic needs to know about the current branch. */
 export interface HeadInfo {
   /** Branch name; `undefined` for a detached HEAD. */
@@ -25,14 +26,14 @@ export type PushPlan =
  */
 export function planPush(head: HeadInfo, remotes: readonly string[]): PushPlan {
   if (!head.name) {
-    return { ok: false, reason: 'Cannot push a detached HEAD. Check out a branch first.' };
+    return { ok: false, reason: t('push.detached') };
   }
   if (head.upstream) {
     return { ok: true, remote: head.upstream.remote, branch: head.name, setUpstream: false };
   }
   const remote = remotes.includes('origin') ? 'origin' : remotes[0];
   if (!remote) {
-    return { ok: false, reason: 'No Git remote is configured, so there is nothing to push to.' };
+    return { ok: false, reason: t('push.noRemote') };
   }
   return { ok: true, remote, branch: head.name, setUpstream: true };
 }

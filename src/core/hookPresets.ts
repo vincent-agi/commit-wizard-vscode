@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 export type HookManager = 'husky' | 'lefthook';
 export type PackageManager = 'npm' | 'pnpm' | 'yarn';
 export type GitHookName = 'pre-commit' | 'pre-push' | 'commit-msg';
@@ -60,14 +61,14 @@ export const COMMIT_HEADER_PATTERN =
 const requireScript =
   (script: string) =>
   (project: ProjectInfo): string | undefined =>
-    project.scripts[script] ? undefined : `needs a "${script}" script in package.json`;
+    project.scripts[script] ? undefined : t('preset.needsScript', script);
 
 const requireAnyScript =
   (...candidates: string[]) =>
   (project: ProjectInfo): string | undefined =>
     candidates.some((name) => project.scripts[name])
       ? undefined
-      : `needs a ${candidates.map((name) => `"${name}"`).join(' or ')} script in package.json`;
+      : t('preset.needsAnyScript', candidates.map((name) => `"${name}"`).join(t('preset.or')));
 
 /** Every preset the installer can offer, in display order. */
 export const HOOK_PRESETS: readonly HookPreset[] = [

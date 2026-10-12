@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 /** Values collected from the "new issue" form. */
 export interface IssueFormInput {
   type: string;
@@ -54,10 +55,10 @@ export function formatIssueTitle(input: Pick<IssueFormInput, 'type' | 'scope' | 
 export function validateIssue(input: IssueFormInput): string[] {
   const errors: string[] = [];
   if (!input.type.trim()) {
-    errors.push('Pick a type.');
+    errors.push(t('issue.err.pickType'));
   }
   if (!input.title.trim()) {
-    errors.push('Enter a title.');
+    errors.push(t('issue.err.enterTitle'));
   }
   return errors;
 }
@@ -126,7 +127,7 @@ export function renderIssueBody(input: IssueFormInput, template?: string): strin
 export function validateMilestone(input: MilestoneFormInput): string[] {
   const errors: string[] = [];
   if (!input.title.trim()) {
-    errors.push('Enter a title.');
+    errors.push(t('issue.err.enterTitle'));
   }
   const due = input.dueOn?.trim();
   if (due) {
@@ -136,7 +137,7 @@ export function validateMilestone(input: MilestoneFormInput): string[] {
       Number.isNaN(parsed.getTime()) ||
       parsed.toISOString().slice(0, 10) !== due
     ) {
-      errors.push('The due date must be a valid YYYY-MM-DD date.');
+      errors.push(t('issue.err.dueDate'));
     }
   }
   return errors;

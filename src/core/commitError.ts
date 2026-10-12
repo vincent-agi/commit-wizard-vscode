@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 /** How a failed commit should be presented to the user. */
 export type CommitFailureKind = 'hook' | 'nothing-staged' | 'other';
 
@@ -41,7 +42,7 @@ export function sanitizeOutput(text: string): string {
 
 function truncate(text: string): string {
   return text.length > MAX_DETAILS_LENGTH
-    ? `${text.slice(0, MAX_DETAILS_LENGTH)}\n… (output truncated)`
+    ? `${text.slice(0, MAX_DETAILS_LENGTH)}\n${t('commitError.truncated')}`
     : text;
 }
 
@@ -75,7 +76,7 @@ export function describeCommitError(error: unknown): CommitFailure {
   if (NOTHING_STAGED.test(haystack)) {
     return {
       kind: 'nothing-staged',
-      summary: 'Nothing to commit. Stage some changes first.',
+      summary: t('commitError.nothingStaged'),
       details: '',
     };
   }
@@ -84,7 +85,7 @@ export function describeCommitError(error: unknown): CommitFailure {
     const hook = haystack.match(HOOK_NAME)?.[1];
     return {
       kind: 'hook',
-      summary: hook ? `The ${hook} hook rejected the commit.` : 'A Git hook rejected the commit.',
+      summary: hook ? t('commitError.hookNamed', hook) : t('commitError.hookUnnamed'),
       details,
       hook,
     };
@@ -92,7 +93,7 @@ export function describeCommitError(error: unknown): CommitFailure {
 
   return {
     kind: 'other',
-    summary: firstLine(message) || 'Commit failed.',
+    summary: firstLine(message) || t('commitError.generic'),
     details,
   };
 }

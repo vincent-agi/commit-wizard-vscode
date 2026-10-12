@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { parseConfigLayer, resolveConfig } from '../core/commitConfig';
 import type { CommitConfig, ConfigLayer } from '../core/commitConfig';
+import { t } from '../i18n';
 
 /** Name of the team configuration file, looked up at the root of the first workspace folder. */
 export const TEAM_CONFIG_FILE = '.commit-wizard.json';
@@ -51,7 +52,7 @@ function readSettingsLayer(): { layer: ConfigLayer; warnings: string[] } {
   if (aiEnabled !== undefined) {
     layer.aiDraft = aiEnabled;
   }
-  return { layer, warnings: errors.map((error) => `VS Code settings: ${error}`) };
+  return { layer, warnings: errors.map((error) => t('config.warn.settings', error)) };
 }
 
 async function readTeamLayer(): Promise<{ layer: ConfigLayer; warnings: string[] }> {
@@ -76,13 +77,13 @@ async function readTeamLayer(): Promise<{ layer: ConfigLayer; warnings: string[]
     raw = JSON.parse(text);
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
-    return { layer: {}, warnings: [`${TEAM_CONFIG_FILE}: invalid JSON (${reason}).`] };
+    return { layer: {}, warnings: [t('config.warn.invalidJson', TEAM_CONFIG_FILE, reason)] };
   }
 
   const { layer, errors } = parseConfigLayer(raw);
   // Sending code to a model is a personal decision a shared file must not make for others.
   delete layer.aiDraft;
-  return { layer, warnings: errors.map((error) => `${TEAM_CONFIG_FILE}: ${error}`) };
+  return { layer, warnings: errors.map((error) => t('config.warn.file', TEAM_CONFIG_FILE, error)) };
 }
 
 /**

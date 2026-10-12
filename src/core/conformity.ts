@@ -1,4 +1,5 @@
 import { parseCommitMessage } from './parseCommit';
+import { t } from '../i18n';
 
 export type ConformityStatus = 'conforming' | 'non-conforming' | 'merge';
 
@@ -34,15 +35,13 @@ export function checkCommitConformity(
     const typeWord = header.match(TYPE_WORD);
     return {
       status: 'non-conforming',
-      reason: typeWord
-        ? 'The description after the colon is empty.'
-        : 'The header is not "type(scope): description" (emoji optional).',
+      reason: typeWord ? t('conformity.emptyDescription') : t('conformity.badHeader'),
     };
   }
   if (!types.includes(parsed.type)) {
     return {
       status: 'non-conforming',
-      reason: `Unknown type "${parsed.type}" (allowed: ${types.join(', ')}).`,
+      reason: t('conformity.unknownType', parsed.type, types.join(', ')),
     };
   }
   return { status: 'conforming', reason: '' };

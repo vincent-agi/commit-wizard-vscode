@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 /** Default pattern of the "New Branch" command. */
 export const DEFAULT_BRANCH_PATTERN = '{type}/{issue}-{slug}';
 
@@ -69,20 +70,19 @@ const FORBIDDEN_CHARS = /[\s~^:?*[\\\u0000-\u001f\u007f]/;
  * @returns The reason it is invalid, or `undefined` when it is acceptable.
  */
 export function branchNameProblem(name: string): string | undefined {
-  if (!name) return 'The branch name is empty.';
-  if (name === '@') return 'A branch cannot be named "@".';
+  if (!name) return t('branch.err.empty');
+  if (name === '@') return t('branch.err.at');
   if (FORBIDDEN_CHARS.test(name)) {
-    return 'A branch name cannot contain spaces or any of ~ ^ : ? * [ \\.';
+    return t('branch.err.chars');
   }
-  if (name.startsWith('-')) return 'A branch name cannot start with "-".';
-  if (name.startsWith('/') || name.endsWith('/'))
-    return 'A branch name cannot start or end with "/".';
-  if (name.includes('//')) return 'A branch name cannot contain "//".';
-  if (name.includes('..')) return 'A branch name cannot contain "..".';
-  if (name.includes('@{')) return 'A branch name cannot contain "@{".';
-  if (name.endsWith('.')) return 'A branch name cannot end with ".".';
+  if (name.startsWith('-')) return t('branch.err.leadingDash');
+  if (name.startsWith('/') || name.endsWith('/')) return t('branch.err.slashEdge');
+  if (name.includes('//')) return t('branch.err.doubleSlash');
+  if (name.includes('..')) return t('branch.err.doubleDot');
+  if (name.includes('@{')) return t('branch.err.atBrace');
+  if (name.endsWith('.')) return t('branch.err.trailingDot');
   if (name.split('/').some((part) => part.startsWith('.') || part.endsWith('.lock'))) {
-    return 'A branch name component cannot start with "." or end with ".lock".';
+    return t('branch.err.component');
   }
   return undefined;
 }
