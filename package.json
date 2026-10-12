@@ -31,10 +31,104 @@
           "id": "gitmojiCommit.commitView",
           "name": "Commit Builder",
           "icon": "media/icon.svg"
+        },
+        {
+          "id": "gitmojiCommit.history",
+          "name": "Commit History",
+          "icon": "media/icon.svg",
+          "when": "workspaceFolderCount > 0"
+        },
+        {
+          "id": "gitmojiCommit.release",
+          "name": "Release Preview",
+          "icon": "media/icon.svg",
+          "when": "workspaceFolderCount > 0"
         }
       ]
     },
+    "menus": {
+      "view/title": [
+        {
+          "command": "gitmojiCommit.history.refresh",
+          "when": "view == gitmojiCommit.history",
+          "group": "navigation@1"
+        },
+        {
+          "command": "gitmojiCommit.history.filter",
+          "when": "view == gitmojiCommit.history && !gitmojiCommit.historyFiltered",
+          "group": "navigation@2"
+        },
+        {
+          "command": "gitmojiCommit.history.unfilter",
+          "when": "view == gitmojiCommit.history && gitmojiCommit.historyFiltered",
+          "group": "navigation@2"
+        },
+        {
+          "command": "gitmojiCommit.release.refresh",
+          "when": "view == gitmojiCommit.release",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "gitmojiCommit.history.reword",
+          "when": "view == gitmojiCommit.history && viewItem =~ /^commit-(head-)?fixable$/",
+          "group": "inline"
+        }
+      ],
+      "commandPalette": [
+        { "command": "gitmojiCommit.history.show", "when": "false" },
+        { "command": "gitmojiCommit.history.reword", "when": "false" },
+        { "command": "gitmojiCommit.release.openPr", "when": "false" },
+        { "command": "gitmojiCommit.release.signIn", "when": "false" }
+      ]
+    },
     "commands": [
+      {
+        "command": "gitmojiCommit.history.refresh",
+        "title": "Refresh Commit History",
+        "category": "Commit Wizard",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "gitmojiCommit.history.filter",
+        "title": "Show Only Non-Conforming Commits",
+        "category": "Commit Wizard",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "gitmojiCommit.history.unfilter",
+        "title": "Show All Commits",
+        "category": "Commit Wizard",
+        "icon": "$(filter-filled)"
+      },
+      {
+        "command": "gitmojiCommit.history.show",
+        "title": "Show Commit Details",
+        "category": "Commit Wizard"
+      },
+      {
+        "command": "gitmojiCommit.history.reword",
+        "title": "Reword This Commit",
+        "category": "Commit Wizard",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "gitmojiCommit.release.refresh",
+        "title": "Refresh Release Preview",
+        "category": "Commit Wizard",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "gitmojiCommit.release.signIn",
+        "title": "Sign In to See the Release Pull Request",
+        "category": "Commit Wizard"
+      },
+      {
+        "command": "gitmojiCommit.release.openPr",
+        "title": "Open the Release Pull Request",
+        "category": "Commit Wizard"
+      },
       {
         "command": "gitmojiCommit.newBranch",
         "title": "New Branch from Type and Ticket",
@@ -163,6 +257,28 @@
           "default": "",
           "scope": "window",
           "description": "Regular expression used to detect the issue in the branch name (first capture group, or the whole match). Empty uses the built-in detection."
+        },
+        "gitmojiCommit.emojiPosition": {
+          "type": "string",
+          "enum": ["before", "after"],
+          "default": "before",
+          "scope": "window",
+          "description": "Where the Gitmoji goes in the header: before the type (\"✨ feat: x\") or after the colon (\"feat: ✨ x\"). Use \"after\" with Release Please, which only reads headers that start with the type. Overridden by .commit-wizard.json."
+        },
+        "gitmojiCommit.history.count": {
+          "type": "number",
+          "default": 50,
+          "minimum": 1,
+          "maximum": 500,
+          "scope": "window",
+          "description": "Number of latest commits shown in the Commit History view."
+        },
+        "gitmojiCommit.history.merges": {
+          "type": "string",
+          "enum": ["ignore", "flag"],
+          "default": "ignore",
+          "scope": "window",
+          "description": "Merge commits in the Commit History view: ignore them, or list them with a merge icon."
         },
         "gitmojiCommit.titleWarningLength": {
           "type": "number",

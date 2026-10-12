@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import { ConfigLoader } from './config/configLoader';
 import { watchWebviewBundles } from './dev/hotReload';
+import { registerHistory } from './history/historyView';
+import { registerRelease } from './release/releaseView';
 import { registerNewBranch } from './branch/newBranch';
 import { registerGeneratePullRequest } from './pr/generatePullRequest';
 import { registerInstallHooks } from './hooks/installHooks';
@@ -28,6 +30,8 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
     registerInstallHooks(configLoader),
     registerNewBranch(configLoader),
+    registerHistory(configLoader, () => provider.beginAmend()),
+    registerRelease(),
     registerGeneratePullRequest(configLoader),
     vscode.commands.registerCommand(NEW_ISSUE_COMMAND, () =>
       IssueFormPanel.show(context.extensionUri, configLoader),

@@ -16,3 +16,4 @@ commitlint.config.cjs
 .github/**
 release-please-config.json
 .release-please-manifest.json
+.commit-wizard.json

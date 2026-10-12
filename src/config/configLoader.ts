@@ -10,6 +10,7 @@ const SETTING_KEYS = [
   'types',
   'scopes',
   'emojis',
+  'emojiPosition',
   'titleWarningLength',
   'titleMaxLength',
   'issuePattern',

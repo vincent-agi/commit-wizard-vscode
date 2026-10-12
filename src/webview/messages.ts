@@ -47,4 +47,5 @@ export type HostToWebviewMessage =
   | { type: 'prefill'; input: CommitFormInput }
   | { type: 'aiResult'; draft: DraftFields }
   | { type: 'aiFailed'; message: string }
+  | { type: 'beginAmend' }
   | { type: 'issueTitles'; titles: Record<string, string> };

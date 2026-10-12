@@ -59,6 +59,8 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
   private readonly webviews = new Set<vscode.Webview>();
   private readonly watchedRepositories = new WeakSet<object>();
   private readonly issueTitles = new Map<number, string>();
+  private readonly readyWebviews = new Set<vscode.Webview>();
+  private pendingAmend = false;
   private lastBranch: string | undefined;
   private pendingDraft: { key: string; input: CommitFormInput } | undefined;
   private draftTimer: NodeJS.Timeout | undefined;
@@ -78,6 +80,26 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
+  /**
+   * Opens the Commit Builder with "Amend last commit" ticked and the last message loaded. If the
+   * view was not open yet, the request waits until its client has received the initial state.
+   */
+  public async beginAmend(): Promise<void> {
+    this.pendingAmend = true;
+    await vscode.commands.executeCommand(`${CommitViewProvider.viewType}.focus`);
+    this.flushPendingAmend();
+  }
+
+  private flushPendingAmend(): void {
+    if (!this.pendingAmend || this.readyWebviews.size === 0) {
+      return;
+    }
+    this.pendingAmend = false;
+    for (const webview of this.readyWebviews) {
+      this.postMessage(webview, { type: 'beginAmend' });
+    }
+  }
+
   public resolveWebviewView(webviewView: vscode.WebviewView): void {
     webviewView.webview.options = {
       enableScripts: true,
@@ -86,7 +108,10 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.html = generateHtml(webviewView.webview, this.extensionUri);
 
     this.webviews.add(webviewView.webview);
-    webviewView.onDidDispose(() => this.webviews.delete(webviewView.webview));
+    webviewView.onDidDispose(() => {
+      this.webviews.delete(webviewView.webview);
+      this.readyWebviews.delete(webviewView.webview);
+    });
 
     webviewView.webview.onDidReceiveMessage((message: WebviewToHostMessage) =>
       this.handleMessage(webviewView.webview, message),
@@ -255,6 +280,8 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
     const { config, warnings } = await this.configLoader.load();
     const state = await this.repositoryState(config);
     this.postMessage(webview, { type: 'init', config, warnings, ...state });
+    this.readyWebviews.add(webview);
+    this.flushPendingAmend();
   }
 
   /** Pushes the freshly resolved configuration to every open webview. */

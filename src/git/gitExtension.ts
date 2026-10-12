@@ -17,9 +17,12 @@ interface GitChange {
   status: number;
 }
 
-interface GitCommit {
+export interface GitCommit {
   hash: string;
   message: string;
+  parents: string[];
+  authorName?: string;
+  authorDate?: Date;
 }
 
 /** Minimal shape of the built-in `vscode.git` extension's repository API (version 1). */
@@ -257,4 +260,40 @@ export async function branchExists(repo: GitRepository, name: string): Promise<b
 /** Creates `name` from the current HEAD and checks it out, carrying uncommitted changes along. */
 export async function createAndCheckoutBranch(repo: GitRepository, name: string): Promise<void> {
   await repo.createBranch(name, true);
+}
+
+/** The tag the latest release was cut from, or `undefined` when the repository has none. */
+export async function getLatestTag(repo: GitRepository): Promise<string | undefined> {
+  try {
+    return (await git(repo, ['describe', '--tags', '--abbrev=0'])) || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Commits made since `tag` (or all of them, capped, when there is no tag), newest first,
+ * merges excluded.
+ */
+export async function getCommitsSince(
+  repo: GitRepository,
+  tag: string | undefined,
+  cap = 300,
+): Promise<BranchCommit[]> {
+  const range = tag ? [`${tag}..HEAD`] : ['HEAD'];
+  const output = await execFileAsync(
+    'git',
+    ['log', '--no-merges', `--max-count=${cap}`, `--format=${GIT_LOG_FORMAT}`, ...range],
+    { cwd: repo.rootUri.fsPath, maxBuffer: 10 * 1024 * 1024 },
+  );
+  return parseGitLog(output.stdout);
+}
+
+/** Commits of the current branch with their parents, newest first. */
+export async function getHistory(repo: GitRepository, count: number): Promise<GitCommit[]> {
+  try {
+    return await repo.log({ maxEntries: count });
+  } catch {
+    return [];
+  }
 }

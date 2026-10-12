@@ -87,6 +87,11 @@ The **Changes** section at the top of the panel mirrors the Source Control view.
    [official Gitmoji catalog](https://gitmoji.dev/) (~75 entries, each with its own
    description). It is the sole source of truth for the emoji prefixing the commit message —
    picking a Type does not change it, and picking a gitmoji does not change the Type.
+   **Emoji position**: by default the emoji comes before the type (`✨ feat: add x`). Tools that
+   read the header by its first word — Release Please above all — then no longer see the type, so
+   set `emojiPosition` to `"after"` (settings or `.commit-wizard.json`) to get `feat: ✨ add x`.
+   This repository does exactly that. The Release Preview view flags commits that Release Please
+   cannot read.
 3. **Scope**: optional. Pick from the dropdown or leave blank.
 4. **Issue / Ticket ID**: auto-filled from the current Git branch name when it contains a
    ticket-like token — `feature/issue-123-login` becomes `#123`, `ABC-45-fix` becomes `ABC-45`.
@@ -206,6 +211,7 @@ automatically when it changes — no window reload needed.
 - **`types`**: replaces the built-in list when non-empty. `name` is required (letters, digits,
   `-`, `_`; no duplicates); `description` and `emoji` are optional. When a type has an `emoji`,
   picking it preselects that Gitmoji (you can still change it).
+- **`emojiPosition`**: `"before"` (default) or `"after"`; see [Filling out a commit](#filling-out-a-commit).
 - **`emojis`**: `false` hides the Gitmoji dropdown and drops the emoji prefix, producing
   `feat(api): add endpoint`.
 - **`scopes`**: merged by name with scopes from the VS Code settings; the file wins on a clash.
@@ -252,6 +258,52 @@ Commits that are not Conventional Commits are listed under **Other changes**. A 
 commit ahead of the base shows an explanation instead. To use your own layout, set `prTemplate`
 in `.commit-wizard.json` with the placeholders `{{title}}`, `{{changes}}`, `{{breaking}}` and
 `{{issues}}`.
+
+## Commit history and rewording
+
+The **Commit History** view (in the Commit Wizard activity bar) lists the latest commits of the
+current branch, 50 by default (`gitmojiCommit.history.count`, up to 500). Each one is marked:
+
+- a green check when its header follows Conventional Commits (emoji before the type or after the
+  colon) and uses a type from your configuration;
+- a warning with the reason (hover for it) otherwise: not `type(scope): description`, an empty
+  description, or an unknown type with the allowed ones listed;
+- merge commits are left out by default; set `gitmojiCommit.history.merges` to `flag` to list
+  them with a merge icon.
+
+The view description counts the non-conforming commits. Use the filter button in the view title to
+show only them, and the refresh button to reload. Clicking a commit opens its full message and,
+for non-conforming ones, the problem.
+
+**Reword**: the pencil on a non-conforming commit.
+
+- On the **latest** commit, the Commit Builder opens with **Amend last commit** ticked and the
+  message loaded, so you fix it and click **Amend commit** (hooks run as usual). If that commit is
+  already on the remote you must confirm first, because amending rewrites shared history; the
+  extension never force-pushes.
+- On an **older** commit it does not rewrite history for you. It shows the exact interactive
+  rebase to run (`git rebase -i HEAD~N`, mark the commit as `reword`) and can copy it.
+
+## Release preview
+
+The **Release Preview** view shows what the next release will contain, computed from the commits
+since the latest tag (all commits when there is no tag) with Release Please's rules:
+
+- `feat` bumps the minor version, `fix` and `perf` the patch version, a breaking change the
+  major version, honoring `bump-minor-pre-major` and `bump-patch-for-minor-pre-major` from
+  `release-please-config.json` for 0.x versions. The current version comes from
+  `.release-please-manifest.json`, then `package.json`.
+- **Changelog preview** lists the sections Release Please would write (Features, Bug Fixes,
+  Performance Improvements, with **BREAKING CHANGES** first).
+- **Not in the changelog** groups `docs`, `chore`, `ci`, ... commits; with only those there is
+  "No release".
+- **Invisible to Release Please** lists commits it cannot read: not Conventional Commits, or an
+  emoji before the type. This is the warning to act on (see **Emoji position** above).
+- **Release PR #N: x.y.z** shows the open release pull request (the one labeled
+  `autorelease: pending`) with the state of its checks; click it to open it on GitHub. It refreshes
+  by itself every two minutes while the view is visible, and with the refresh button. When you
+  are not signed in to GitHub it shows a sign-in entry instead of an error; rate limits and
+  network problems are shown as a message.
 
 ## Creating issues and milestones
 
@@ -346,6 +398,9 @@ regenerate it.
 | `gitmojiCommit.issueTracker.preset` / `.baseUrl` | `""` | Tracker preset (`jira`, `linear`, `github`) and its root URL. |
 | `gitmojiCommit.issueUrlTemplate` | `""` | Link template with `{id}`; overrides the preset. |
 | `gitmojiCommit.branchPattern` | `""` | Pattern of the New Branch command; empty uses `{type}/{issue}-{slug}`. |
+| `gitmojiCommit.emojiPosition` | `"before"` | Emoji before the type, or `"after"` the colon (Release Please needs the type first). |
+| `gitmojiCommit.history.count` | `50` | Commits listed in the Commit History view (1-500). |
+| `gitmojiCommit.history.merges` | `"ignore"` | `"ignore"` merge commits in the history, or `"flag"` them. |
 | `gitmojiCommit.issuePattern` | `""` | Regex to detect the issue in the branch name; empty uses the built-in detection. |
 | `gitmojiCommit.titleWarningLength` | `50` | Title length that triggers the amber warning. |
 | `gitmojiCommit.titleMaxLength` | `72` | Title length that triggers the red warning. |

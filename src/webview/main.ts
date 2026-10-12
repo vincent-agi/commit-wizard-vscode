@@ -102,6 +102,7 @@ function currentInput(): CommitFormInput {
   return {
     type: typeSelect.value,
     gitmoji: config.emojis ? gitmojiSelect.value : '',
+    emojiPosition: config.emojiPosition,
     scope: scopeSelect.value || undefined,
     issue: issueInput.value || undefined,
     issueKeyword: issueKeywordSelect.value as IssueKeyword,
@@ -562,6 +563,11 @@ window.addEventListener('message', (event: MessageEvent<HostToWebviewMessage>) =
       drafting = false;
       commitStatus.textContent = '';
       applyAiDraft(message.draft);
+      break;
+    case 'beginAmend':
+      amendCheckbox.checked = true;
+      vscode.postMessage({ type: 'setAmend', amend: true });
+      render();
       break;
     case 'issueTitles':
       issueTitles = { ...issueTitles, ...message.titles };

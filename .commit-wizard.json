@@ -1,0 +1,10 @@
+{
+  "emojiPosition": "after",
+  "issueTracker": { "preset": "github" },
+  "scopes": [
+    { "name": "core", "description": "Pure logic in src/core (formatting, parsing, configuration)" },
+    { "name": "webview", "description": "Commit Builder webview, its host provider and client" },
+    { "name": "hooks", "description": "Git hooks installer and presets" },
+    { "name": "issues", "description": "GitHub issue and milestone form" }
+  ]
+}
