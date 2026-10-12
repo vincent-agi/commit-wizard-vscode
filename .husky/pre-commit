@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+set -e
+
+# Lint
+npm run lint
+
+# Format check
+npm run format:check

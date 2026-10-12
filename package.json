@@ -8,7 +8,10 @@
   "engines": {
     "vscode": "^1.85.0"
   },
-  "categories": ["SCM Providers", "Other"],
+  "categories": [
+    "SCM Providers",
+    "Other"
+  ],
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
@@ -57,13 +60,19 @@
           "items": {
             "type": "object",
             "properties": {
-              "name": { "type": "string", "description": "The scope name, e.g. \"webview\"." },
+              "name": {
+                "type": "string",
+                "description": "The scope name, e.g. \"webview\"."
+              },
               "description": {
                 "type": "string",
                 "description": "A short explanation of when to use this scope."
               }
             },
-            "required": ["name", "description"]
+            "required": [
+              "name",
+              "description"
+            ]
           },
           "default": [],
           "scope": "window",
@@ -127,12 +136,15 @@
     "test:watch": "vitest",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
     "pretest:e2e": "npm run compile",
     "test:e2e": "node ./out/test/runTest.js",
     "package": "vsce package --allow-missing-repository",
-    "vscode:prepublish": "npm run compile"
+    "vscode:prepublish": "npm run compile",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.3",
     "@types/mocha": "^10.0.6",
     "@types/node": "^20.11.0",
     "@types/vscode": "^1.85.0",
@@ -143,6 +155,7 @@
     "esbuild": "^0.28.2",
     "eslint": "^8.56.0",
     "glob": "^10.3.10",
+    "husky": "^9.1.7",
     "mocha": "^10.3.0",
     "prettier": "^3.2.5",
     "typescript": "^5.3.3",

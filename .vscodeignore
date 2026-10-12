@@ -11,3 +11,8 @@ docs/**
 **/*.spec.ts
 .gitignore
 *.vsix
+.husky/**
+commitlint.config.cjs
+.github/**
+release-please-config.json
+.release-please-manifest.json
