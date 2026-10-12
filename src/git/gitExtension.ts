@@ -28,8 +28,8 @@ export function getActiveRepository(): GitRepository | undefined {
  * Stages the active repository's changes and commits them with `message`.
  *
  * @returns `true` when a repository was found and the commit succeeded, `false` when no
- * repository is open. Errors from the underlying `commit` call (e.g. nothing staged) propagate
- * to the caller.
+ * repository is open. Errors from the underlying `commit` call (failing hook, nothing staged)
+ * propagate to the caller. The commit never skips hooks: no `noVerify` option is ever passed.
  */
 export async function commitActiveRepository(message: string): Promise<boolean> {
   const repo = getActiveRepository();

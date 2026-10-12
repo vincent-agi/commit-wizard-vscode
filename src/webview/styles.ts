@@ -105,6 +105,55 @@ export function getStyles(): string {
       font-family: var(--vscode-editor-font-family, monospace);
       min-height: 2em;
     }
+    #commitNow:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+    #commitStatus {
+      margin-top: 6px;
+      font-size: 0.85em;
+      color: var(--vscode-descriptionForeground);
+    }
+    #commitStatus:empty {
+      display: none;
+    }
+    #commitError {
+      display: none;
+      margin-top: 8px;
+      padding: 8px;
+      border: 1px solid var(--vscode-inputValidation-errorBorder, var(--vscode-editorError-foreground));
+      background: var(--vscode-inputValidation-errorBackground, transparent);
+      border-radius: 2px;
+    }
+    #commitError.visible {
+      display: block;
+    }
+    #commitErrorSummary {
+      font-weight: 600;
+    }
+    #commitErrorDetails {
+      margin-top: 6px;
+    }
+    #commitErrorDetails[hidden] {
+      display: none;
+    }
+    #commitErrorOutput {
+      margin: 6px 0 0;
+      max-height: 200px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: var(--vscode-editor-font-family, monospace);
+      font-size: 0.85em;
+    }
+    #coAuthorsError {
+      font-size: 0.85em;
+      margin-top: 2px;
+      color: var(--vscode-editorError-foreground);
+    }
+    #coAuthorsError:empty {
+      display: none;
+    }
     #breakingChangeDescriptionRow {
       display: none;
     }

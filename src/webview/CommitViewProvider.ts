@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { extractIssueFromBranch } from '../core/branchIssueExtractor';
+import { describeCommitError } from '../core/commitError';
 import { formatCommitMessage } from '../core/formatCommit';
 import { addScope } from '../core/scopeConfig';
 import type { Scope } from '../core/types';
@@ -55,7 +56,7 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
         await this.addScope(webview);
         return;
       case 'commitNow':
-        await this.commitNow(message.input);
+        await this.commitNow(webview, message.input);
         return;
     }
   }
@@ -112,19 +113,30 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
     this.postMessage(webview, { type: 'scopesUpdated', scopes: updatedScopes });
   }
 
-  private async commitNow(input: Parameters<typeof formatCommitMessage>[0]): Promise<void> {
+  private async commitNow(
+    webview: vscode.Webview,
+    input: Parameters<typeof formatCommitMessage>[0],
+  ): Promise<void> {
     const message = formatCommitMessage(input);
+    this.postMessage(webview, { type: 'commitStarted' });
 
     try {
       const committed = await commitActiveRepository(message);
       if (!committed) {
-        vscode.window.showWarningMessage(
-          'No active Git repository found. Open a folder with a Git repository to commit.',
-        );
+        this.postMessage(webview, {
+          type: 'commitFailed',
+          failure: {
+            kind: 'other',
+            summary:
+              'No active Git repository found. Open a folder with a Git repository to commit.',
+            details: '',
+          },
+        });
+        return;
       }
+      this.postMessage(webview, { type: 'commitSucceeded' });
     } catch (error) {
-      const reason = error instanceof Error ? error.message : String(error);
-      vscode.window.showErrorMessage(`Commit failed: ${reason}`);
+      this.postMessage(webview, { type: 'commitFailed', failure: describeCommitError(error) });
     }
   }
 
