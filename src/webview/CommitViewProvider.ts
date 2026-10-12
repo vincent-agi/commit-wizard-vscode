@@ -3,6 +3,7 @@ import { extractIssueFromBranch } from '../core/branchIssueExtractor';
 import { describeCommitError } from '../core/commitError';
 import { formatCommitMessage } from '../core/formatCommit';
 import { addScope } from '../core/scopeConfig';
+import { ConfigLoader } from '../config/configLoader';
 import type { Scope } from '../core/types';
 import { commitActiveRepository, getCurrentBranchName } from '../git/gitExtension';
 import { generateHtml } from './html';
@@ -28,7 +29,14 @@ async function writeScopes(scopes: Scope[]): Promise<void> {
 export class CommitViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'gitmojiCommit.commitView';
 
-  constructor(private readonly extensionUri: vscode.Uri) {}
+  private readonly webviews = new Set<vscode.Webview>();
+
+  constructor(
+    private readonly extensionUri: vscode.Uri,
+    private readonly configLoader: ConfigLoader,
+  ) {
+    configLoader.onDidChange(() => void this.broadcastConfig());
+  }
 
   public resolveWebviewView(webviewView: vscode.WebviewView): void {
     webviewView.webview.options = {
@@ -36,6 +44,9 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
       localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'dist')],
     };
     webviewView.webview.html = generateHtml(webviewView.webview, this.extensionUri);
+
+    this.webviews.add(webviewView.webview);
+    webviewView.onDidDispose(() => this.webviews.delete(webviewView.webview));
 
     webviewView.webview.onDidReceiveMessage((message: WebviewToHostMessage) =>
       this.handleMessage(webviewView.webview, message),
@@ -48,12 +59,12 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
   ): Promise<void> {
     switch (message.type) {
       case 'ready':
-        this.sendInit(webview);
+        await this.sendInit(webview);
         return;
       case 'formChanged':
         return;
       case 'addScope':
-        await this.addScope(webview);
+        await this.addScope();
         return;
       case 'commitNow':
         await this.commitNow(webview, message.input);
@@ -69,18 +80,25 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
    * eager post is silently lost whenever the webview is recreated (e.g. after the sidebar is
    * closed and reopened).
    */
-  private sendInit(webview: vscode.Webview): void {
+  private async sendInit(webview: vscode.Webview): Promise<void> {
+    const { config, warnings } = await this.configLoader.load();
     const branchName = getCurrentBranchName();
-    const detectedIssue = branchName ? extractIssueFromBranch(branchName) : undefined;
+    const detectedIssue = branchName
+      ? extractIssueFromBranch(branchName, config.issuePattern)
+      : undefined;
 
-    this.postMessage(webview, {
-      type: 'init',
-      scopes: readScopes(),
-      detectedIssue,
-    });
+    this.postMessage(webview, { type: 'init', config, warnings, detectedIssue });
   }
 
-  private async addScope(webview: vscode.Webview): Promise<void> {
+  /** Pushes the freshly resolved configuration to every open webview. */
+  private async broadcastConfig(): Promise<void> {
+    const { config, warnings } = await this.configLoader.load();
+    for (const webview of this.webviews) {
+      this.postMessage(webview, { type: 'configUpdated', config, warnings });
+    }
+  }
+
+  private async addScope(): Promise<void> {
     if (!vscode.workspace.workspaceFolders?.length) {
       vscode.window.showWarningMessage(
         'Open a workspace folder to add and persist a new scope.',
@@ -109,8 +127,8 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
     }
 
     const updatedScopes = addScope(readScopes(), { name, description });
+    // The settings change event makes the loader refresh every open webview.
     await writeScopes(updatedScopes);
-    this.postMessage(webview, { type: 'scopesUpdated', scopes: updatedScopes });
   }
 
   private async commitNow(

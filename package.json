@@ -31,6 +31,12 @@
         }
       ]
     },
+    "jsonValidation": [
+      {
+        "fileMatch": ".commit-wizard.json",
+        "url": "./schemas/commit-wizard.schema.json"
+      }
+    ],
     "configuration": {
       "title": "Commit Wizard",
       "properties": {
@@ -50,6 +56,44 @@
           "default": [],
           "scope": "window",
           "description": "Project-specific scopes offered in the scope dropdown, each with a short description."
+        },
+        "gitmojiCommit.types": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The type keyword, e.g. \"deps\"."
+              },
+              "description": {
+                "type": "string",
+                "description": "Short explanation shown in the dropdown."
+              },
+              "emoji": {
+                "type": "string",
+                "description": "Gitmoji preselected when this type is picked."
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "default": [],
+          "scope": "window",
+          "description": "Commit types offered in the Type dropdown. Empty uses the built-in ten types. Overridden by .commit-wizard.json."
+        },
+        "gitmojiCommit.emojis": {
+          "type": "boolean",
+          "default": true,
+          "scope": "window",
+          "description": "Prefix commit messages with a Gitmoji. When disabled, the Gitmoji dropdown is hidden. Overridden by .commit-wizard.json."
+        },
+        "gitmojiCommit.issuePattern": {
+          "type": "string",
+          "default": "",
+          "scope": "window",
+          "description": "Regular expression used to detect the issue in the branch name (first capture group, or the whole match). Empty uses the built-in detection."
         },
         "gitmojiCommit.titleWarningLength": {
           "type": "number",

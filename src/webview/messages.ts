@@ -1,5 +1,6 @@
 import type { CommitFailure } from '../core/commitError';
-import type { CommitFormInput, Scope } from '../core/types';
+import type { CommitConfig } from '../core/commitConfig';
+import type { CommitFormInput } from '../core/types';
 
 /** Message shape sent from the webview client to the extension host. */
 export type WebviewToHostMessage =
@@ -10,8 +11,8 @@ export type WebviewToHostMessage =
 
 /** Message shape sent from the extension host to the webview client. */
 export type HostToWebviewMessage =
-  | { type: 'init'; scopes: Scope[]; detectedIssue?: string }
-  | { type: 'scopesUpdated'; scopes: Scope[] }
+  | { type: 'init'; config: CommitConfig; warnings: string[]; detectedIssue?: string }
+  | { type: 'configUpdated'; config: CommitConfig; warnings: string[] }
   | { type: 'commitStarted' }
   | { type: 'commitSucceeded' }
   | { type: 'commitFailed'; failure: CommitFailure };

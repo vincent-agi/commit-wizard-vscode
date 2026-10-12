@@ -50,17 +50,19 @@ folder first.
 
 ## Filling out a commit
 
-1. **Type**: pick one of the ten Conventional Commit types; each shows a short description
-   automatically (`feat` "A new feature", `fix` "A bug fix", `docs`, `style`, `refactor`, `perf`,
-   `test`, `chore`, `build`, `ci`), to help pick the right one. This dropdown carries no gitmoji
-   of its own.
-2. **Gitmoji**: a fully independent dropdown listing the full
+1. **Type**: pick a Conventional Commit type; each shows a short description to help pick the
+   right one. The built-in list is `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`,
+   `chore`, `build`, `ci`, and you can replace it with your own (see
+   [Team configuration](#team-configuration)). A type only changes the Gitmoji when you gave it an
+   `emoji` yourself; the built-in types don't.
+2. **Gitmoji** (hidden when emojis are disabled): a dropdown listing the full
    [official Gitmoji catalog](https://gitmoji.dev/) (~75 entries, each with its own
    description). It is the sole source of truth for the emoji prefixing the commit message —
    picking a Type does not change it, and picking a gitmoji does not change the Type.
 3. **Scope**: optional. Pick from the dropdown or leave blank.
 4. **Issue / Ticket ID**: auto-filled from the current Git branch name when it contains a
-   ticket-like token — `feature/123-login` becomes `123`. Edit or clear it freely; it is only a
+   ticket-like token — `feature/issue-123-login` becomes `#123`, `ABC-45-fix` becomes `ABC-45`.
+   A custom `issuePattern` (see below) takes precedence. Edit or clear it freely; it is only a
    starting suggestion. You can enter **several references** separated by spaces or commas
    (`12, PROJ-3`); each gets its own footer line. A dropdown next to it picks the GitHub/GitLab
    footer keyword: **Refs** (default, just links the issue), **Closes**, **Fixes**, **Resolves**
@@ -98,10 +100,53 @@ If the commit fails, your input is kept and an error box appears under the butto
 - **No Git repository**: open a folder that contains one.
 - **Any other Git error**: the first line is shown as the headline, with the full output available.
 
+## Team configuration
+
+Commit conventions can live in the repository so the whole team shares them. Create
+`.commit-wizard.json` at the root of the workspace (the first workspace folder):
+
+```json
+{
+  "types": [
+    { "name": "feat", "description": "A new feature", "emoji": "✨" },
+    { "name": "fix", "description": "A bug fix", "emoji": "🐛" },
+    { "name": "deps", "description": "Dependency updates", "emoji": "⬆️" }
+  ],
+  "scopes": [{ "name": "api", "description": "HTTP API" }],
+  "emojis": true,
+  "titleWarningLength": 50,
+  "titleMaxLength": 72,
+  "issuePattern": "(ENG-\\d+)"
+}
+```
+
+Every field is optional. The extension validates the file as you edit it (bundled JSON schema, with autocompletion) and reloaded
+automatically when it changes — no window reload needed.
+
+- **`types`**: replaces the built-in list when non-empty. `name` is required (letters, digits,
+  `-`, `_`; no duplicates); `description` and `emoji` are optional. When a type has an `emoji`,
+  picking it preselects that Gitmoji (you can still change it).
+- **`emojis`**: `false` hides the Gitmoji dropdown and drops the emoji prefix, producing
+  `feat(api): add endpoint`.
+- **`scopes`**: merged by name with scopes from the VS Code settings; the file wins on a clash.
+- **`titleWarningLength` / `titleMaxLength`**: thresholds of the character counter. The warning
+  length must not exceed the maximum, otherwise both fall back to 50 / 72.
+- **`issuePattern`**: regular expression applied to the branch name; the first capture group (or
+  the whole match) is used. Invalid patterns are ignored.
+
+**Precedence**: `.commit-wizard.json` > VS Code settings > built-in defaults, field by field
+(only `scopes` are merged). An invalid field is ignored and reported in a warning banner at the top
+of the panel; the other fields still apply, and an invalid JSON file falls back to the settings.
+
 ## Configuration reference
 
 | Setting | Default | Description |
 | --- | --- | --- |
 | `gitmojiCommit.scopes` | `[]` | `{ name, description }` scopes offered in the dropdown. |
+| `gitmojiCommit.types` | `[]` | `{ name, description?, emoji? }` types; empty keeps the built-in ten. |
+| `gitmojiCommit.emojis` | `true` | Prefix messages with a Gitmoji; `false` hides the dropdown. |
+| `gitmojiCommit.issuePattern` | `""` | Regex to detect the issue in the branch name; empty uses the built-in detection. |
 | `gitmojiCommit.titleWarningLength` | `50` | Title length that triggers the amber warning. |
 | `gitmojiCommit.titleMaxLength` | `72` | Title length that triggers the red warning. |
+
+All of these can also be set in `.commit-wizard.json`, which takes precedence.

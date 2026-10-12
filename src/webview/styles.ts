@@ -105,6 +105,21 @@ export function getStyles(): string {
       font-family: var(--vscode-editor-font-family, monospace);
       min-height: 2em;
     }
+    #configWarnings {
+      display: none;
+      margin-bottom: 8px;
+      padding: 6px 8px;
+      font-size: 0.85em;
+      white-space: pre-wrap;
+      border: 1px solid var(--vscode-editorWarning-foreground);
+      border-radius: 2px;
+    }
+    #configWarnings.visible {
+      display: block;
+    }
+    #gitmojiRow[hidden] {
+      display: none;
+    }
     #commitNow:disabled {
       opacity: 0.6;
       cursor: default;

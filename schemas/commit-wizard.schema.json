@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Commit Wizard team configuration",
+  "description": "Shared commit conventions read from .commit-wizard.json at the workspace root. Values here override the VS Code settings.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "types": {
+      "type": "array",
+      "description": "Commit types offered in the Type dropdown. Replaces the built-in list when non-empty.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+            "description": "The type keyword, e.g. \"deps\"."
+          },
+          "description": {
+            "type": "string",
+            "description": "Short explanation shown in the dropdown."
+          },
+          "emoji": {
+            "type": "string",
+            "description": "Gitmoji preselected when this type is picked. The user can still change it."
+          }
+        }
+      }
+    },
+    "scopes": {
+      "type": "array",
+      "description": "Shared scopes. Merged by name with scopes from the VS Code settings; this file wins on a clash.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "description"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "description": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "emojis": {
+      "type": "boolean",
+      "description": "When false, the Gitmoji dropdown is hidden and messages have no emoji prefix.",
+      "default": true
+    },
+    "titleWarningLength": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 50,
+      "description": "Short-description length at which the counter turns amber."
+    },
+    "titleMaxLength": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 72,
+      "description": "Short-description length at which the counter turns red."
+    },
+    "issuePattern": {
+      "type": "string",
+      "description": "Regular expression applied to the branch name to detect the issue. The first capture group (or the whole match) is used."
+    }
+  }
+}

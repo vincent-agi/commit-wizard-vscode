@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { ConfigLoader } from './config/configLoader';
 import { CommitViewProvider } from './webview/CommitViewProvider';
 
 /**
@@ -7,9 +8,11 @@ import { CommitViewProvider } from './webview/CommitViewProvider';
  * @param context - The extension's activation context, used to scope subscriptions.
  */
 export function activate(context: vscode.ExtensionContext): void {
-  const provider = new CommitViewProvider(context.extensionUri);
+  const configLoader = new ConfigLoader();
+  const provider = new CommitViewProvider(context.extensionUri, configLoader);
 
   context.subscriptions.push(
+    configLoader,
     vscode.window.registerWebviewViewProvider(CommitViewProvider.viewType, provider),
   );
 }

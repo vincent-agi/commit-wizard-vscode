@@ -1,27 +1,10 @@
 import * as vscode from 'vscode';
 import { GITMOJI_CATALOG } from '../core/gitmoji';
-import {
-  COMMIT_TYPE_DESCRIPTIONS,
-  ISSUE_KEYWORD_DESCRIPTIONS,
-  ISSUE_KEYWORD_LABELS,
-} from '../core/types';
-import type { CommitType, IssueKeyword } from '../core/types';
+import { ISSUE_KEYWORD_DESCRIPTIONS, ISSUE_KEYWORD_LABELS } from '../core/types';
+import type { IssueKeyword } from '../core/types';
 import { getStyles } from './styles';
 
 const ISSUE_KEYWORD_ORDER: IssueKeyword[] = ['refs', 'closes', 'fixes', 'resolves', 'seeAlso'];
-
-const TYPE_ORDER: CommitType[] = [
-  'feat',
-  'fix',
-  'docs',
-  'style',
-  'refactor',
-  'perf',
-  'test',
-  'chore',
-  'build',
-  'ci',
-];
 
 /** Generates a 32-character random nonce for the webview's Content Security Policy. */
 export function generateNonce(): string {
@@ -31,13 +14,6 @@ export function generateNonce(): string {
     nonce += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return nonce;
-}
-
-function typeOptionsHtml(): string {
-  return TYPE_ORDER.map((type) => {
-    const description = COMMIT_TYPE_DESCRIPTIONS[type];
-    return `<option value="${type}" title="${description}">${type} — ${description}</option>`;
-  }).join('');
 }
 
 function issueKeywordOptionsHtml(): string {
@@ -83,11 +59,15 @@ export function generateHtml(webview: vscode.Webview, extensionUri: vscode.Uri):
   <title>Commit Builder</title>
 </head>
 <body>
-  <label for="type">Type</label>
-  <select id="type">${typeOptionsHtml()}</select>
+  <div id="configWarnings" role="alert"></div>
 
-  <label for="gitmoji">Gitmoji</label>
-  <select id="gitmoji">${gitmojiOptionsHtml()}</select>
+  <label for="type">Type</label>
+  <select id="type"></select>
+
+  <div id="gitmojiRow">
+    <label for="gitmoji">Gitmoji</label>
+    <select id="gitmoji">${gitmojiOptionsHtml()}</select>
+  </div>
 
   <label for="scope">Scope</label>
   <div class="row">
