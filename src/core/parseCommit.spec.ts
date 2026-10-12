@@ -61,6 +61,13 @@ describe('parseCommitMessage', () => {
     });
   });
 
+  it('keeps the keyword of every issue footer in references', () => {
+    expect(parseCommitMessage('feat: a\n\nCloses #1\nRefs: PROJ-2')?.references).toEqual([
+      { keyword: 'closes', id: '#1' },
+      { keyword: 'refs', id: 'PROJ-2' },
+    ]);
+  });
+
   it('maps Refs and See also keywords', () => {
     expect(parseCommitMessage('feat: a\n\nRefs: #1')?.issueKeyword).toBe('refs');
     expect(parseCommitMessage('feat: a\n\nSee also: #1')?.issueKeyword).toBe('seeAlso');

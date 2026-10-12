@@ -15,6 +15,8 @@ export interface ParsedCommit {
   issueKeyword: IssueKeyword;
   breakingChangeDescription?: string;
   coAuthors: string[];
+  /** Every issue footer with its own keyword (the form only keeps the first keyword). */
+  references: { keyword: IssueKeyword; id: string }[];
 }
 
 const HEADER_EMOJI_FIRST = new RegExp(COMMIT_HEADER_PATTERN, 'u');
@@ -92,6 +94,7 @@ export function parseCommitMessage(message: string): ParsedCommit | undefined {
   }
 
   const issues: string[] = [];
+  const references: { keyword: IssueKeyword; id: string }[] = [];
   const coAuthors: string[] = [];
   let issueKeyword: IssueKeyword = 'refs';
   let breakingChangeDescription: string | undefined;
@@ -107,6 +110,7 @@ export function parseCommitMessage(message: string): ParsedCommit | undefined {
         issueKeyword = KEYWORDS[issue[1].toLowerCase()];
       }
       issues.push(issue[2]);
+      references.push({ keyword: KEYWORDS[issue[1].toLowerCase()], id: issue[2] });
     } else if (author) {
       coAuthors.push(author[1].trim());
     }
@@ -124,5 +128,6 @@ export function parseCommitMessage(message: string): ParsedCommit | undefined {
     issueKeyword,
     breakingChangeDescription,
     coAuthors,
+    references,
   };
 }
