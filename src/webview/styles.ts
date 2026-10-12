@@ -105,6 +105,84 @@ export function getStyles(): string {
       font-family: var(--vscode-editor-font-family, monospace);
       min-height: 2em;
     }
+    [hidden] {
+      display: none !important;
+    }
+    #protectedBanner {
+      display: none;
+      margin-bottom: 8px;
+      padding: 6px 8px;
+      font-size: 0.85em;
+      border: 1px solid var(--vscode-editorWarning-foreground);
+      border-radius: 2px;
+    }
+    #protectedBanner.visible {
+      display: block;
+    }
+    details summary {
+      cursor: pointer;
+      font-weight: 600;
+      margin-top: 6px;
+    }
+    .changes-actions {
+      margin-top: 6px;
+    }
+    .list-title {
+      margin-top: 6px;
+      font-size: 0.85em;
+      color: var(--vscode-descriptionForeground);
+    }
+    .file-list {
+      list-style: none;
+      margin: 2px 0 0;
+      padding: 0;
+      max-height: 140px;
+      overflow: auto;
+    }
+    .file-list li {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.9em;
+    }
+    .file-list label {
+      margin: 0;
+      font-weight: normal;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      word-break: break-all;
+    }
+    .file-status {
+      font-family: var(--vscode-editor-font-family, monospace);
+      color: var(--vscode-descriptionForeground);
+    }
+    #changesHint {
+      margin-top: 4px;
+      font-size: 0.85em;
+      color: var(--vscode-editorWarning-foreground);
+    }
+    #changesHint:empty {
+      display: none;
+    }
+    #suggestionRow {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+      font-size: 0.85em;
+    }
+    #suggestionRow.visible {
+      display: flex;
+    }
+    #aiDraft {
+      margin-top: 6px;
+    }
+    #commitPush {
+      width: 100%;
+      margin-top: 6px;
+      padding: 6px;
+    }
     #configWarnings {
       display: none;
       margin-bottom: 8px;

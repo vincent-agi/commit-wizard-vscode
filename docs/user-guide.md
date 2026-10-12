@@ -48,6 +48,34 @@ Each scope has a **name** and a mandatory short **description**, shown together 
 If no workspace folder is open, the **+** button shows a warning instead of saving — open a
 folder first.
 
+## Choosing what to commit
+
+The **Changes** section at the top of the panel mirrors the Source Control view.
+
+- **Staged** and **Not staged** lists show each file with its status letter (`M` modified, `A`
+  added, `D` deleted, `R` renamed, `U` untracked). Tick a file to stage it, untick it to unstage
+  it (this only changes the index, never your working tree). **Stage all** / **Unstage all** act on
+  the whole list.
+- With nothing staged, **Commit now** is disabled and a hint says why.
+- **Suggested: docs** — when the staged files make the type and/or scope obvious, a one-click
+  suggestion appears under the Type dropdown. It is computed locally, never overrides a choice
+  you already made, and is only shown when every staged file agrees: documentation (`docs/`,
+  `*.md`) gives `docs`, `*.spec.ts` / `tests/` gives `test`, CI files give `ci`, `package.json`,
+  lockfiles and `tsconfig*.json` give `build`, and the folder under `src/` gives the scope. Only
+  types and scopes that exist in your configuration are suggested. Add your own rules with
+  `suggestionRules` in `.commit-wizard.json`:
+
+  ```json
+  {
+    "suggestionRules": [
+      { "glob": "docs/api/**", "type": "docs", "scope": "api" },
+      { "glob": "src/payments/**", "scope": "payments" }
+    ]
+  }
+  ```
+
+  The first matching rule replaces the built-in heuristics for that file.
+
 ## Filling out a commit
 
 1. **Type**: pick a Conventional Commit type; each shows a short description to help pick the
@@ -81,17 +109,50 @@ folder first.
 All footers (`BREAKING CHANGE`, issue references, `Co-authored-by`) are grouped in one block at the
 end of the message, following the Git trailer format.
 
+### Drafts and recent messages
+
+- What you type is saved as a **draft per repository and branch** and restored when the panel
+  reopens or you come back to that branch. A successful commit, or the **Clear** button, removes
+  the draft. Only text fields count: picking a type or scope alone does not create a draft.
+- **Recent messages** lists the last 10 commits of the branch; picking one fills the form (a
+  message that is not a Conventional Commit goes in as description and body).
+
+### Drafting with AI (optional)
+
+Off by default. Enable `gitmojiCommit.ai.enabled` in your own settings (it is deliberately ignored
+in `.commit-wizard.json`: sending code to a model is a personal decision) to get a **Draft with
+AI** button under the description.
+
+Clicking it asks VS Code for a language model (for example GitHub Copilot) and, if there are
+several, lets you pick one. Before anything leaves your machine a confirmation shows the model,
+the number of files and characters, and what was left out: lockfiles, build output (`dist/`,
+`out/`), source maps, minified and binary files are never sent, and the diff is cut at 12,000
+characters. The answer only fills the type, scope, description and body so you can edit them;
+nothing is committed. If VS Code has no language model API or no model is available you get an
+explanation and the form is left untouched.
+
 The **preview box** updates on every keystroke so you always see exactly what will be written.
 
 ## Sending the commit
 
-Click **Commit now**. The message is committed to the active repository's staged changes. Your
-Git hooks (`pre-commit`, `commit-msg`, …) always run — the extension never bypasses them with
-`--no-verify`. The button is disabled while Git and the hooks run.
+- **Commit now** commits the staged changes. **Commit & Push** also pushes the current branch to
+  its upstream; a branch without upstream is pushed to `origin` (or the first remote) and set to
+  track it. A push is never forced. If the commit succeeds but the push fails (rejected, no
+  remote, authentication), the commit stays, the form is cleared and the reason is shown.
+- **Amend last commit** loads the previous commit into the form (it is split back into type,
+  scope, description, body and footers when it is a Conventional Commit) and the button becomes
+  **Amend commit**. If that commit is already on the remote you must confirm, because amending it
+  rewrites shared history.
+- **Protected branches**: on `main` and `master` (change them with `protectedBranches`, globs such
+  as `release/*` work, an empty list turns it off) a banner is shown and a confirmation is needed
+  before committing. Cancelling commits nothing.
+
+Your Git hooks (`pre-commit`, `commit-msg`, …) always run — the extension never bypasses them with
+`--no-verify`. The buttons are disabled while Git and the hooks run.
 
 On success the description, body, breaking change and co-author fields are cleared.
 
-If the commit fails, your input is kept and an error box appears under the button:
+If the commit fails, your input is kept and an error box appears under the buttons:
 
 - **A hook rejected the commit**: the headline names the hook when it can be identified, and the
   hook's output (colors stripped, truncated if very long) is expanded below so you can fix the
@@ -133,6 +194,8 @@ automatically when it changes — no window reload needed.
   length must not exceed the maximum, otherwise both fall back to 50 / 72.
 - **`issueTemplate`**: Markdown body template for the issue form; see
   [Creating issues and milestones](#creating-issues-and-milestones).
+- **`protectedBranches`**: see [Sending the commit](#sending-the-commit).
+- **`suggestionRules`**: see [Choosing what to commit](#choosing-what-to-commit).
 - **`issuePattern`**: regular expression applied to the branch name; the first capture group (or
   the whole match) is used. Invalid patterns are ignored.
 
@@ -228,6 +291,8 @@ regenerate it.
 | `gitmojiCommit.scopes` | `[]` | `{ name, description }` scopes offered in the dropdown. |
 | `gitmojiCommit.types` | `[]` | `{ name, description?, emoji? }` types; empty keeps the built-in ten. |
 | `gitmojiCommit.emojis` | `true` | Prefix messages with a Gitmoji; `false` hides the dropdown. |
+| `gitmojiCommit.protectedBranches` | `["main", "master"]` | Branch names or globs where committing asks for confirmation. |
+| `gitmojiCommit.ai.enabled` | `false` | Offer the "Draft with AI" button (personal setting, ignored in the team file). |
 | `gitmojiCommit.issuePattern` | `""` | Regex to detect the issue in the branch name; empty uses the built-in detection. |
 | `gitmojiCommit.titleWarningLength` | `50` | Title length that triggers the amber warning. |
 | `gitmojiCommit.titleMaxLength` | `72` | Title length that triggers the red warning. |

@@ -58,9 +58,33 @@ export function generateHtml(webview: vscode.Webview, extensionUri: vscode.Uri):
 </head>
 <body>
   <div id="configWarnings" role="alert"></div>
+  <div id="protectedBanner" role="alert"></div>
+
+  <details id="changesSection" open>
+    <summary>Changes <span id="changesCount"></span></summary>
+    <div class="row changes-actions">
+      <button type="button" class="secondary" id="stageAll">Stage all</button>
+      <button type="button" class="secondary" id="unstageAll">Unstage all</button>
+    </div>
+    <div id="stagedTitle" class="list-title">Staged</div>
+    <ul id="stagedList" class="file-list"></ul>
+    <div id="unstagedTitle" class="list-title">Not staged</div>
+    <ul id="unstagedList" class="file-list"></ul>
+    <div id="changesHint"></div>
+  </details>
+
+  <label for="recent">Recent messages</label>
+  <div class="row">
+    <select id="recent"><option value="">(pick one to reuse it)</option></select>
+    <button type="button" class="secondary" id="clearForm" title="Clear the form and its saved draft">Clear</button>
+  </div>
 
   <label for="type">Type</label>
   <select id="type"></select>
+  <div id="suggestionRow">
+    <span id="suggestionText"></span>
+    <button type="button" class="secondary" id="applySuggestion">Apply</button>
+  </div>
 
   <div id="gitmojiRow">
     <label for="gitmoji">Gitmoji</label>
@@ -82,6 +106,7 @@ export function generateHtml(webview: vscode.Webview, extensionUri: vscode.Uri):
   <label for="description">Short description</label>
   <input type="text" id="description" placeholder="add live preview component" />
   <div id="charCounter">0 characters</div>
+  <button type="button" class="secondary" id="aiDraft" hidden title="Sends the staged diff to a language model you choose, after you confirm">Draft with AI</button>
 
   <label for="body">Body</label>
   <textarea id="body" placeholder="Optional detailed explanation"></textarea>
@@ -102,7 +127,13 @@ export function generateHtml(webview: vscode.Webview, extensionUri: vscode.Uri):
   <label>Preview</label>
   <div id="preview"></div>
 
+  <div class="checkbox-row">
+    <input type="checkbox" id="amend" />
+    <label for="amend">Amend last commit</label>
+  </div>
+
   <button type="button" id="commitNow">Commit now</button>
+  <button type="button" class="secondary" id="commitPush">Commit &amp; Push</button>
   <div id="commitStatus" role="status" aria-live="polite"></div>
   <div id="commitError" role="alert">
     <div id="commitErrorSummary"></div>

@@ -1,12 +1,19 @@
 import { parseCoAuthors } from '../core/coAuthors';
 import { DEFAULT_CONFIG } from '../core/commitConfig';
 import type { CommitConfig } from '../core/commitConfig';
-import { restoreControls, snapshotControls } from './persist';
-import type { PersistedControl } from './persist';
+import type { ChangeList, ChangedFile } from '../core/changes';
+import type { DraftFields } from '../core/aiDraft';
 import { formatCommitMessage } from '../core/formatCommit';
+import { parseCommitMessage } from '../core/parseCommit';
+import { isProtectedBranch } from '../core/protectedBranch';
+import { suggestFromPaths } from '../core/suggest';
+import type { Suggestion } from '../core/suggest';
 import { titleLengthStatus } from '../core/titleLength';
 import type { CommitFormInput, IssueKeyword, Scope } from '../core/types';
-import type { HostToWebviewMessage, WebviewToHostMessage } from './messages';
+import type { CommitFailure } from '../core/commitError';
+import { restoreControls, snapshotControls } from './persist';
+import type { PersistedControl } from './persist';
+import type { HostToWebviewMessage, RepositoryState, WebviewToHostMessage } from './messages';
 
 declare function acquireVsCodeApi(): {
   postMessage(message: WebviewToHostMessage): void;
@@ -18,35 +25,58 @@ const vscode = acquireVsCodeApi();
 // Read before the first render, which would overwrite it with the blank form.
 const savedState = vscode.getState();
 
-const typeSelect = document.getElementById('type') as HTMLSelectElement;
-const configWarnings = document.getElementById('configWarnings') as HTMLDivElement;
-const gitmojiRow = document.getElementById('gitmojiRow') as HTMLDivElement;
-const gitmojiSelect = document.getElementById('gitmoji') as HTMLSelectElement;
-const scopeSelect = document.getElementById('scope') as HTMLSelectElement;
-const addScopeButton = document.getElementById('addScope') as HTMLButtonElement;
-const issueKeywordSelect = document.getElementById('issueKeyword') as HTMLSelectElement;
-const issueInput = document.getElementById('issue') as HTMLInputElement;
-const descriptionInput = document.getElementById('description') as HTMLInputElement;
-const charCounter = document.getElementById('charCounter') as HTMLDivElement;
-const bodyTextarea = document.getElementById('body') as HTMLTextAreaElement;
-const breakingChangeCheckbox = document.getElementById('breakingChange') as HTMLInputElement;
-const breakingChangeDescriptionRow = document.getElementById(
-  'breakingChangeDescriptionRow',
-) as HTMLDivElement;
-const breakingChangeDescriptionTextarea = document.getElementById(
-  'breakingChangeDescription',
-) as HTMLTextAreaElement;
-const coAuthorsTextarea = document.getElementById('coAuthors') as HTMLTextAreaElement;
-const coAuthorsError = document.getElementById('coAuthorsError') as HTMLDivElement;
-const commitStatus = document.getElementById('commitStatus') as HTMLDivElement;
-const commitError = document.getElementById('commitError') as HTMLDivElement;
-const commitErrorSummary = document.getElementById('commitErrorSummary') as HTMLDivElement;
-const commitErrorDetails = document.getElementById('commitErrorDetails') as HTMLDetailsElement;
-const commitErrorOutput = document.getElementById('commitErrorOutput') as HTMLPreElement;
-const previewBox = document.getElementById('preview') as HTMLDivElement;
-const commitNowButton = document.getElementById('commitNow') as HTMLButtonElement;
+const $ = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
+
+const typeSelect = $<HTMLSelectElement>('type');
+const configWarnings = $<HTMLDivElement>('configWarnings');
+const protectedBanner = $<HTMLDivElement>('protectedBanner');
+const gitmojiRow = $<HTMLDivElement>('gitmojiRow');
+const gitmojiSelect = $<HTMLSelectElement>('gitmoji');
+const scopeSelect = $<HTMLSelectElement>('scope');
+const addScopeButton = $<HTMLButtonElement>('addScope');
+const issueKeywordSelect = $<HTMLSelectElement>('issueKeyword');
+const issueInput = $<HTMLInputElement>('issue');
+const descriptionInput = $<HTMLInputElement>('description');
+const charCounter = $<HTMLDivElement>('charCounter');
+const bodyTextarea = $<HTMLTextAreaElement>('body');
+const breakingChangeCheckbox = $<HTMLInputElement>('breakingChange');
+const breakingChangeDescriptionRow = $<HTMLDivElement>('breakingChangeDescriptionRow');
+const breakingChangeDescriptionTextarea = $<HTMLTextAreaElement>('breakingChangeDescription');
+const coAuthorsTextarea = $<HTMLTextAreaElement>('coAuthors');
+const coAuthorsError = $<HTMLDivElement>('coAuthorsError');
+const commitStatus = $<HTMLDivElement>('commitStatus');
+const commitError = $<HTMLDivElement>('commitError');
+const commitErrorSummary = $<HTMLDivElement>('commitErrorSummary');
+const commitErrorDetails = $<HTMLDetailsElement>('commitErrorDetails');
+const commitErrorOutput = $<HTMLPreElement>('commitErrorOutput');
+const previewBox = $<HTMLDivElement>('preview');
+const commitNowButton = $<HTMLButtonElement>('commitNow');
+const commitPushButton = $<HTMLButtonElement>('commitPush');
+const amendCheckbox = $<HTMLInputElement>('amend');
+const aiDraftButton = $<HTMLButtonElement>('aiDraft');
+const recentSelect = $<HTMLSelectElement>('recent');
+const clearFormButton = $<HTMLButtonElement>('clearForm');
+const changesCount = $<HTMLSpanElement>('changesCount');
+const stagedList = $<HTMLUListElement>('stagedList');
+const unstagedList = $<HTMLUListElement>('unstagedList');
+const stageAllButton = $<HTMLButtonElement>('stageAll');
+const unstageAllButton = $<HTMLButtonElement>('unstageAll');
+const changesHint = $<HTMLDivElement>('changesHint');
+const suggestionRow = $<HTMLDivElement>('suggestionRow');
+const suggestionText = $<HTMLSpanElement>('suggestionText');
+const applySuggestionButton = $<HTMLButtonElement>('applySuggestion');
 
 let config: CommitConfig = DEFAULT_CONFIG;
+let changes: ChangeList = { staged: [], unstaged: [] };
+let branch: string | undefined;
+let detectedIssue: string | undefined;
+let recent: string[] = [];
+let suggestion: Suggestion | undefined;
+let committing = false;
+let drafting = false;
+// Nothing is reported to the host before it has sent the initial state: a blank form posted
+// too early would erase the saved draft.
+let hostReady = false;
 
 const persistedControls: PersistedControl[] = [
   typeSelect,
@@ -76,6 +106,115 @@ function currentInput(): CommitFormInput {
   };
 }
 
+/** Adds `value` to a select when it is missing, so a saved value is never silently lost. */
+function ensureOption(select: HTMLSelectElement, value: string, text = value): void {
+  if (!Array.from(select.options).some((option) => option.value === value)) {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = text;
+    select.appendChild(option);
+  }
+}
+
+/** Fills the form from a message (draft, recent commit, amended commit). */
+function applyInput(input: CommitFormInput): void {
+  ensureOption(typeSelect, input.type);
+  typeSelect.value = input.type;
+  if (config.emojis && input.gitmoji) {
+    selectGitmoji(input.gitmoji);
+  }
+  scopeSelect.value = input.scope ?? '';
+  issueKeywordSelect.value = input.issueKeyword;
+  issueInput.value = input.issue ?? '';
+  descriptionInput.value = input.description;
+  bodyTextarea.value = input.body ?? '';
+  breakingChangeCheckbox.checked = input.breakingChange;
+  breakingChangeDescriptionTextarea.value = input.breakingChangeDescription ?? '';
+  coAuthorsTextarea.value = (input.coAuthors ?? []).join('\n');
+}
+
+function renderFileList(list: HTMLUListElement, files: ChangedFile[], staged: boolean): void {
+  list.textContent = '';
+  for (const file of files) {
+    const item = document.createElement('li');
+    const label = document.createElement('label');
+    const box = document.createElement('input');
+    box.type = 'checkbox';
+    box.checked = staged;
+    box.addEventListener('change', () =>
+      vscode.postMessage({ type: box.checked ? 'stage' : 'unstage', paths: [file.path] }),
+    );
+    const status = document.createElement('span');
+    status.className = 'file-status';
+    status.textContent = file.status;
+    label.append(box, status, document.createTextNode(file.path));
+    item.appendChild(label);
+    list.appendChild(item);
+  }
+}
+
+function renderChanges(): void {
+  renderFileList(stagedList, changes.staged, true);
+  renderFileList(unstagedList, changes.unstaged, false);
+  changesCount.textContent = `(${changes.staged.length} staged, ${changes.unstaged.length} not staged)`;
+  stageAllButton.disabled = changes.unstaged.length === 0;
+  unstageAllButton.disabled = changes.staged.length === 0;
+  $('stagedTitle').hidden = changes.staged.length === 0;
+  $('unstagedTitle').hidden = changes.unstaged.length === 0;
+}
+
+function renderSuggestion(): void {
+  suggestion = suggestFromPaths(
+    changes.staged.map((file) => file.path),
+    {
+      types: config.types.map((type) => type.name),
+      scopes: config.scopes.map((scope) => scope.name),
+      rules: config.suggestionRules,
+    },
+  );
+  // Only worth showing when it would change something the user has not already chosen.
+  const differs =
+    suggestion !== undefined &&
+    ((suggestion.type !== undefined && suggestion.type !== typeSelect.value) ||
+      (suggestion.scope !== undefined && suggestion.scope !== scopeSelect.value));
+  suggestionRow.classList.toggle('visible', differs);
+  if (differs && suggestion) {
+    const parts = [suggestion.type, suggestion.scope ? `(${suggestion.scope})` : ''];
+    suggestionText.textContent = `Suggested: ${parts.join('')}`;
+  }
+}
+
+function renderActions(): void {
+  const amend = amendCheckbox.checked;
+  const nothingStaged = !amend && changes.staged.length === 0;
+  commitNowButton.textContent = amend ? 'Amend commit' : 'Commit now';
+  commitNowButton.disabled = committing || nothingStaged;
+  commitPushButton.disabled = committing || nothingStaged;
+  commitPushButton.hidden = false;
+  aiDraftButton.hidden = !config.aiDraft;
+  aiDraftButton.disabled = drafting || changes.staged.length === 0;
+  changesHint.textContent = nothingStaged ? 'Stage some changes to commit them.' : '';
+}
+
+function renderBranch(): void {
+  const protectedNow = isProtectedBranch(branch, config.protectedBranches);
+  protectedBanner.classList.toggle('visible', protectedNow);
+  protectedBanner.textContent = protectedNow
+    ? `You are on the protected branch "${branch}". Committing here asks for confirmation.`
+    : '';
+}
+
+function renderRecent(): void {
+  recentSelect.length = 1;
+  recent.forEach((message, index) => {
+    const option = document.createElement('option');
+    option.value = String(index);
+    option.textContent = message.split('\n')[0];
+    option.title = message;
+    recentSelect.appendChild(option);
+  });
+}
+
 function render(): void {
   const input = currentInput();
 
@@ -97,8 +236,13 @@ function render(): void {
 
   previewBox.textContent = input.description ? formatCommitMessage(input) : '';
 
+  renderSuggestion();
+  renderActions();
+
   vscode.setState(snapshotControls(persistedControls));
-  vscode.postMessage({ type: 'formChanged', input });
+  if (hostReady) {
+    vscode.postMessage({ type: 'formChanged', input });
+  }
 }
 
 function setTypes(types: CommitConfig['types']): void {
@@ -118,23 +262,8 @@ function setTypes(types: CommitConfig['types']): void {
 
 /** Selects `emoji` in the Gitmoji dropdown, adding it as a custom entry when absent. */
 function selectGitmoji(emoji: string): void {
-  const exists = Array.from(gitmojiSelect.options).some((option) => option.value === emoji);
-  if (!exists) {
-    const option = document.createElement('option');
-    option.value = emoji;
-    option.textContent = `${emoji} custom`;
-    gitmojiSelect.appendChild(option);
-  }
+  ensureOption(gitmojiSelect, emoji, `${emoji} custom`);
   gitmojiSelect.value = emoji;
-}
-
-function applyConfig(next: CommitConfig, warnings: string[]): void {
-  config = next;
-  setTypes(next.types);
-  setScopes(next.scopes);
-  gitmojiRow.hidden = !next.emojis;
-  configWarnings.textContent = warnings.join('\n');
-  configWarnings.classList.toggle('visible', warnings.length > 0);
 }
 
 function setScopes(scopes: Scope[]): void {
@@ -150,6 +279,64 @@ function setScopes(scopes: Scope[]): void {
   if (scopes.some((scope) => scope.name === previouslySelected)) {
     scopeSelect.value = previouslySelected;
   }
+}
+
+function applyConfig(next: CommitConfig, warnings: string[]): void {
+  config = next;
+  setTypes(next.types);
+  setScopes(next.scopes);
+  gitmojiRow.hidden = !next.emojis;
+  configWarnings.textContent = warnings.join('\n');
+  configWarnings.classList.toggle('visible', warnings.length > 0);
+  renderBranch();
+}
+
+function applyRepository(state: RepositoryState): void {
+  branch = state.branch;
+  detectedIssue = state.detectedIssue;
+  recent = state.recent;
+  changes = state.changes;
+  renderChanges();
+  renderRecent();
+  renderBranch();
+}
+
+function clearMessageFields(): void {
+  descriptionInput.value = '';
+  bodyTextarea.value = '';
+  breakingChangeCheckbox.checked = false;
+  breakingChangeDescriptionTextarea.value = '';
+  coAuthorsTextarea.value = '';
+  amendCheckbox.checked = false;
+}
+
+function showFailure(failure: CommitFailure): void {
+  commitErrorSummary.textContent = failure.summary;
+  commitErrorOutput.textContent = failure.details;
+  commitErrorDetails.hidden = !failure.details;
+  commitErrorDetails.open = failure.kind === 'hook';
+  commitError.classList.add('visible');
+}
+
+function hideCommitError(): void {
+  commitError.classList.remove('visible');
+  commitErrorSummary.textContent = '';
+  commitErrorOutput.textContent = '';
+}
+
+function setCommitting(value: boolean): void {
+  committing = value;
+  commitStatus.textContent = value ? 'Committing… Git hooks may take a moment.' : '';
+  renderActions();
+}
+
+function submit(push: boolean): void {
+  vscode.postMessage({
+    type: 'commitNow',
+    input: currentInput(),
+    amend: amendCheckbox.checked,
+    push,
+  });
 }
 
 for (const element of [
@@ -176,64 +363,157 @@ typeSelect.addEventListener('change', () => {
   }
 });
 
-addScopeButton.addEventListener('click', () => {
-  vscode.postMessage({ type: 'addScope' });
+addScopeButton.addEventListener('click', () => vscode.postMessage({ type: 'addScope' }));
+stageAllButton.addEventListener('click', () => vscode.postMessage({ type: 'stageAll' }));
+unstageAllButton.addEventListener('click', () => vscode.postMessage({ type: 'unstageAll' }));
+commitNowButton.addEventListener('click', () => submit(false));
+commitPushButton.addEventListener('click', () => submit(true));
+
+applySuggestionButton.addEventListener('click', () => {
+  if (suggestion?.type) typeSelect.value = suggestion.type;
+  if (suggestion?.scope) scopeSelect.value = suggestion.scope;
+  typeSelect.dispatchEvent(new Event('change'));
+  render();
 });
 
-function hideCommitError(): void {
-  commitError.classList.remove('visible');
-  commitErrorSummary.textContent = '';
-  commitErrorOutput.textContent = '';
-}
-
-function setCommitting(committing: boolean): void {
-  commitNowButton.disabled = committing;
-  commitStatus.textContent = committing ? 'Committing… Git hooks may take a moment.' : '';
-}
-
-function clearMessageFields(): void {
-  descriptionInput.value = '';
-  bodyTextarea.value = '';
-  breakingChangeCheckbox.checked = false;
-  breakingChangeDescriptionTextarea.value = '';
-  coAuthorsTextarea.value = '';
-}
-
-commitNowButton.addEventListener('click', () => {
-  vscode.postMessage({ type: 'commitNow', input: currentInput() });
+amendCheckbox.addEventListener('change', () => {
+  if (amendCheckbox.checked) {
+    vscode.postMessage({ type: 'setAmend', amend: true });
+  }
+  render();
 });
+
+recentSelect.addEventListener('change', () => {
+  const message = recent[Number(recentSelect.value)];
+  recentSelect.value = '';
+  if (message === undefined) return;
+
+  const parsed = parseCommitMessage(message);
+  applyInput(
+    parsed
+      ? {
+          type: parsed.type,
+          gitmoji: parsed.gitmoji,
+          scope: parsed.scope,
+          issue: parsed.issue,
+          issueKeyword: parsed.issueKeyword,
+          description: parsed.description,
+          body: parsed.body,
+          breakingChange: parsed.breaking,
+          breakingChangeDescription: parsed.breakingChangeDescription,
+          coAuthors: parsed.coAuthors,
+        }
+      : {
+          type: typeSelect.value,
+          gitmoji: gitmojiSelect.value,
+          issueKeyword: 'refs',
+          description: message.split('\n')[0].trim(),
+          body: message.split('\n').slice(1).join('\n').trim() || undefined,
+          breakingChange: false,
+        },
+  );
+  render();
+});
+
+clearFormButton.addEventListener('click', () => {
+  clearMessageFields();
+  issueInput.value = detectedIssue ?? '';
+  hideCommitError();
+  vscode.postMessage({ type: 'clearDraft' });
+  render();
+});
+
+aiDraftButton.addEventListener('click', () => {
+  drafting = true;
+  commitStatus.textContent = 'Waiting for the language model…';
+  hideCommitError();
+  renderActions();
+  vscode.postMessage({ type: 'draftWithAi' });
+});
+
+function applyAiDraft(draft: DraftFields): void {
+  if (draft.type) typeSelect.value = draft.type;
+  if (draft.scope) scopeSelect.value = draft.scope;
+  descriptionInput.value = draft.description;
+  bodyTextarea.value = draft.body ?? '';
+  typeSelect.dispatchEvent(new Event('change'));
+  render();
+}
 
 window.addEventListener('message', (event: MessageEvent<HostToWebviewMessage>) => {
   const message = event.data;
-  if (message.type === 'init') {
-    applyConfig(message.config, message.warnings);
-    // Controls survive a webview reload (hot reload, or the view being recreated).
-    restoreControls(persistedControls, savedState);
-    if (message.detectedIssue && !issueInput.value) {
-      issueInput.value = message.detectedIssue;
-    }
-    render();
-  } else if (message.type === 'configUpdated') {
-    applyConfig(message.config, message.warnings);
-    render();
-  } else if (message.type === 'commitStarted') {
-    hideCommitError();
-    setCommitting(true);
-  } else if (message.type === 'commitSucceeded') {
-    setCommitting(false);
-    clearMessageFields();
-    render();
-  } else if (message.type === 'commitFailed') {
-    // Form content is deliberately left untouched so the user can fix the problem and retry.
-    setCommitting(false);
-    commitErrorSummary.textContent = message.failure.summary;
-    commitErrorOutput.textContent = message.failure.details;
-    commitErrorDetails.hidden = !message.failure.details;
-    commitErrorDetails.open = message.failure.kind === 'hook';
-    commitError.classList.add('visible');
+  switch (message.type) {
+    case 'init':
+      applyConfig(message.config, message.warnings);
+      applyRepository(message);
+      if (message.draft) {
+        applyInput(message.draft);
+      } else {
+        // Controls survive a webview reload (hot reload, or the view being recreated).
+        restoreControls(persistedControls, savedState);
+      }
+      if (message.detectedIssue && !issueInput.value) {
+        issueInput.value = message.detectedIssue;
+      }
+      hostReady = true;
+      render();
+      break;
+    case 'configUpdated':
+      applyConfig(message.config, message.warnings);
+      render();
+      break;
+    case 'branchChanged':
+      // Another branch has its own draft: swap the whole message, keep the dropdown choices.
+      clearMessageFields();
+      issueInput.value = '';
+      applyRepository(message);
+      if (message.draft) {
+        applyInput(message.draft);
+      } else if (message.detectedIssue) {
+        issueInput.value = message.detectedIssue;
+      }
+      render();
+      break;
+    case 'changes':
+      changes = message.changes;
+      renderChanges();
+      render();
+      break;
+    case 'commitStarted':
+      hideCommitError();
+      setCommitting(true);
+      break;
+    case 'commitSucceeded':
+      setCommitting(false);
+      clearMessageFields();
+      recent = message.recent;
+      renderRecent();
+      render();
+      break;
+    case 'commitFailed':
+      // Form content is deliberately left untouched so the user can fix the problem and retry.
+      setCommitting(false);
+      showFailure(message.failure);
+      break;
+    case 'prefill':
+      applyInput(message.input);
+      render();
+      break;
+    case 'aiResult':
+      drafting = false;
+      commitStatus.textContent = '';
+      applyAiDraft(message.draft);
+      break;
+    case 'aiFailed':
+      drafting = false;
+      commitStatus.textContent = '';
+      showFailure({ kind: 'other', summary: message.message, details: '' });
+      renderActions();
+      break;
   }
 });
 
 applyConfig(DEFAULT_CONFIG, []);
+renderChanges();
 render();
 vscode.postMessage({ type: 'ready' });

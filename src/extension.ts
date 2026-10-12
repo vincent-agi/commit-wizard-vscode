@@ -12,7 +12,11 @@ import { CommitViewProvider } from './webview/CommitViewProvider';
  */
 export function activate(context: vscode.ExtensionContext): void {
   const configLoader = new ConfigLoader();
-  const provider = new CommitViewProvider(context.extensionUri, configLoader);
+  const provider = new CommitViewProvider(
+    context.extensionUri,
+    configLoader,
+    context.workspaceState,
+  );
 
   context.subscriptions.push(
     configLoader,
