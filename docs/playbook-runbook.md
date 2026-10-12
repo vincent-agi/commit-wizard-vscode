@@ -87,6 +87,19 @@ them against temporary Git repositories.
 To remove hooks from a test repo: delete the generated files and run
 `git config --unset core.hooksPath`.
 
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every pull request and on pushes to `main`:
+
+| Job | What it does | Required? |
+| --- | --- | --- |
+| `verify` | `npm ci`, lint, format check, unit tests, compile | yes |
+| `commits` | commitlint over the PR's commits (same config as the local `commit-msg` hook) | yes |
+| `e2e` | extension-host tests under `xvfb` | no (report only, slow) |
+
+Mark `verify` and `commits` as required status checks in **Settings > Branches** (branch
+protection rule for `main`). The workflow has read-only permissions.
+
 ## Building
 
 ```bash
