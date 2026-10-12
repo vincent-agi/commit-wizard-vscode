@@ -13,6 +13,7 @@ const SETTING_KEYS = [
   'titleWarningLength',
   'titleMaxLength',
   'issuePattern',
+  'protectedBranches',
 ] as const;
 
 /** Resolved configuration plus human-readable problems found while reading it. */
@@ -32,6 +33,10 @@ function readSettingsLayer(): { layer: ConfigLayer; warnings: string[] } {
     }
   }
   const { layer, errors } = parseConfigLayer(raw);
+  const aiEnabled = settings.get<boolean>('ai.enabled');
+  if (aiEnabled !== undefined) {
+    layer.aiDraft = aiEnabled;
+  }
   return { layer, warnings: errors.map((error) => `VS Code settings: ${error}`) };
 }
 
@@ -61,6 +66,8 @@ async function readTeamLayer(): Promise<{ layer: ConfigLayer; warnings: string[]
   }
 
   const { layer, errors } = parseConfigLayer(raw);
+  // Sending code to a model is a personal decision a shared file must not make for others.
+  delete layer.aiDraft;
   return { layer, warnings: errors.map((error) => `${TEAM_CONFIG_FILE}: ${error}`) };
 }
 

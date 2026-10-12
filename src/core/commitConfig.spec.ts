@@ -98,6 +98,46 @@ describe('parseConfigLayer', () => {
   });
 });
 
+describe('parseConfigLayer (assistance options)', () => {
+  it('accepts protected branches, including an explicit empty list', () => {
+    expect(parseConfigLayer({ protectedBranches: ['main', 'release/*', ' '] }).layer).toEqual({
+      protectedBranches: ['main', 'release/*'],
+    });
+    expect(parseConfigLayer({ protectedBranches: [] })).toEqual({
+      layer: { protectedBranches: [] },
+      errors: [],
+    });
+    expect(parseConfigLayer({ protectedBranches: 'main' }).errors).toHaveLength(1);
+    expect(parseConfigLayer({ protectedBranches: [1] }).errors).toHaveLength(1);
+  });
+
+  it('validates suggestion rules one by one', () => {
+    const { layer, errors } = parseConfigLayer({
+      suggestionRules: [
+        { glob: 'docs/**', type: 'docs' },
+        { glob: 'src/api/**', scope: 'api' },
+        { glob: 'x/**' },
+        { type: 'fix' },
+      ],
+    });
+    expect(layer.suggestionRules).toEqual([
+      { glob: 'docs/**', type: 'docs' },
+      { glob: 'src/api/**', scope: 'api' },
+    ]);
+    expect(errors).toHaveLength(2);
+  });
+
+  it('accepts a boolean aiDraft only', () => {
+    expect(parseConfigLayer({ aiDraft: true }).layer).toEqual({ aiDraft: true });
+    expect(parseConfigLayer({ aiDraft: 'yes' }).errors).toHaveLength(1);
+  });
+
+  it('defaults protect main and master, and keep AI off', () => {
+    expect(DEFAULT_CONFIG.protectedBranches).toEqual(['main', 'master']);
+    expect(DEFAULT_CONFIG.aiDraft).toBe(false);
+  });
+});
+
 describe('resolveConfig', () => {
   it('returns the defaults when no layer defines anything', () => {
     expect(resolveConfig([{}, {}])).toEqual({ config: DEFAULT_CONFIG, errors: [] });

@@ -60,6 +60,27 @@
       "default": 72,
       "description": "Short-description length at which the counter turns red."
     },
+    "protectedBranches": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": ["main", "master"],
+      "description": "Branch names or globs (e.g. \"release/*\") on which committing asks for confirmation. An empty list disables the protection."
+    },
+    "suggestionRules": {
+      "type": "array",
+      "description": "Map changed paths to a suggested type and/or scope. The first matching rule wins and replaces the built-in heuristics for that file.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["glob"],
+        "anyOf": [{ "required": ["type"] }, { "required": ["scope"] }],
+        "properties": {
+          "glob": { "type": "string", "description": "Glob on the repository-relative path, e.g. \"docs/api/**\"." },
+          "type": { "type": "string" },
+          "scope": { "type": "string" }
+        }
+      }
+    },
     "issueTemplate": {
       "type": "string",
       "description": "Markdown template for issues created from the \"New Issue or Milestone\" form. Placeholders: {{title}}, {{context}}, {{goal}}, {{scope}}, {{acceptanceCriteria}}, {{notes}}."

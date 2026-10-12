@@ -1,4 +1,5 @@
 import { COMMIT_TYPE_DESCRIPTIONS } from './types';
+import type { SuggestionRule } from './suggest';
 import type { DefaultCommitType, Scope } from './types';
 
 /** A commit type offered in the Type dropdown. */
@@ -24,6 +25,12 @@ export interface CommitConfig {
    * placeholders. Absent: the standard layout is used.
    */
   issueTemplate?: string;
+  /** Branch names or globs where committing asks for confirmation. */
+  protectedBranches: string[];
+  /** Team rules mapping changed paths to a suggested type/scope; first match wins. */
+  suggestionRules: SuggestionRule[];
+  /** Whether the "Draft with AI" button is offered. Personal: never read from the team file. */
+  aiDraft: boolean;
 }
 
 /** One source of configuration (VS Code settings or the repository file); every field optional. */
@@ -52,6 +59,9 @@ export const DEFAULT_CONFIG: CommitConfig = {
   emojis: true,
   titleWarningLength: 50,
   titleMaxLength: 72,
+  protectedBranches: ['main', 'master'],
+  suggestionRules: [],
+  aiDraft: false,
 };
 
 const TYPE_NAME = /^[A-Za-z][A-Za-z0-9_-]*$/;
@@ -192,6 +202,49 @@ export function parseConfigLayer(raw: unknown): { layer: ConfigLayer; errors: st
     }
   }
 
+  if (raw.protectedBranches !== undefined) {
+    if (
+      Array.isArray(raw.protectedBranches) &&
+      raw.protectedBranches.every((entry) => typeof entry === 'string')
+    ) {
+      // An explicit empty list is meaningful: it turns the protection off.
+      layer.protectedBranches = raw.protectedBranches
+        .map((entry: string) => entry.trim())
+        .filter(Boolean);
+    } else {
+      errors.push('"protectedBranches" must be an array of strings.');
+    }
+  }
+
+  if (raw.suggestionRules !== undefined) {
+    if (!Array.isArray(raw.suggestionRules)) {
+      errors.push('"suggestionRules" must be an array.');
+    } else {
+      const rules: SuggestionRule[] = [];
+      raw.suggestionRules.forEach((item, index) => {
+        const glob = isRecord(item) ? nonEmptyString(item.glob) : undefined;
+        const type = isRecord(item) ? nonEmptyString(item.type) : undefined;
+        const scope = isRecord(item) ? nonEmptyString(item.scope) : undefined;
+        if (!glob || (!type && !scope)) {
+          errors.push(`suggestionRules[${index}]: "glob" and a "type" or "scope" are required.`);
+          return;
+        }
+        rules.push({ glob, ...(type ? { type } : {}), ...(scope ? { scope } : {}) });
+      });
+      if (rules.length > 0) {
+        layer.suggestionRules = rules;
+      }
+    }
+  }
+
+  if (raw.aiDraft !== undefined) {
+    if (typeof raw.aiDraft === 'boolean') {
+      layer.aiDraft = raw.aiDraft;
+    } else {
+      errors.push('"aiDraft" must be true or false.');
+    }
+  }
+
   if (raw.issueTemplate !== undefined) {
     const template = nonEmptyString(raw.issueTemplate);
     if (template) {
@@ -244,6 +297,15 @@ export function resolveConfig(layers: readonly ConfigLayer[]): {
     }
     if (layer.issueTemplate !== undefined) {
       config.issueTemplate = layer.issueTemplate;
+    }
+    if (layer.protectedBranches !== undefined) {
+      config.protectedBranches = layer.protectedBranches;
+    }
+    if (layer.suggestionRules !== undefined) {
+      config.suggestionRules = layer.suggestionRules;
+    }
+    if (layer.aiDraft !== undefined) {
+      config.aiDraft = layer.aiDraft;
     }
   }
 
