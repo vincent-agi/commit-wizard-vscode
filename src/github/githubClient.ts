@@ -126,6 +126,25 @@ export function createGitHubClient(
       return { number: created.number, url: created.html_url };
     },
 
+    async getIssue(number: number): Promise<{ title: string; state: string }> {
+      const issue = await request<{ title: string; state: string }>(`/issues/${number}`, 'GET');
+      return { title: issue.title, state: issue.state };
+    },
+
+    async createPullRequest(payload: {
+      title: string;
+      body: string;
+      head: string;
+      base: string;
+    }): Promise<CreatedResource> {
+      const created = await request<{ number: number; html_url: string }>(
+        '/pulls',
+        'POST',
+        payload,
+      );
+      return { number: created.number, url: created.html_url };
+    },
+
     async createMilestone(payload: {
       title: string;
       description?: string;

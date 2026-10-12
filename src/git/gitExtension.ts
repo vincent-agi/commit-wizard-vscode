@@ -6,6 +6,8 @@ import { toChangeList } from '../core/changes';
 import type { ChangeList, RawChange } from '../core/changes';
 import { parseGitHubRemote } from '../core/githubRemote';
 import type { GitHubRepo } from '../core/githubRemote';
+import { GIT_LOG_FORMAT, parseGitLog } from '../core/prDescription';
+import type { BranchCommit } from '../core/prDescription';
 import type { HeadInfo, PushPlan } from '../core/pushDecision';
 
 const execFileAsync = promisify(execFile);
@@ -182,4 +184,77 @@ export function getGitHubRepository(): GitHubRepo | undefined {
     }
   }
   return undefined;
+}
+
+async function git(repo: GitRepository, args: string[]): Promise<string> {
+  const { stdout } = await execFileAsync('git', args, {
+    cwd: repo.rootUri.fsPath,
+    maxBuffer: 10 * 1024 * 1024,
+  });
+  return stdout.trim();
+}
+
+async function refExists(repo: GitRepository, ref: string): Promise<boolean> {
+  try {
+    await git(repo, ['rev-parse', '--verify', '--quiet', ref]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The branch pull requests target: the remote's default (`origin/HEAD`), else the first of
+ * `main` / `master` that exists, never the current branch itself.
+ *
+ * @returns The ref to compare against and its short branch name, or `undefined`.
+ */
+export async function getDefaultBaseBranch(
+  repo: GitRepository,
+): Promise<{ ref: string; name: string } | undefined> {
+  const current = repo.state.HEAD?.name;
+  const candidates: string[] = [];
+  try {
+    candidates.push(await git(repo, ['symbolic-ref', '--short', 'refs/remotes/origin/HEAD']));
+  } catch {
+    // No origin/HEAD: fall back to the usual names.
+  }
+  candidates.push('origin/main', 'origin/master', 'main', 'master');
+
+  for (const ref of candidates) {
+    const name = ref.replace(/^origin\//, '');
+    if (name !== current && (await refExists(repo, ref))) {
+      return { ref, name };
+    }
+  }
+  return undefined;
+}
+
+/** Commits on HEAD that are not on `baseRef`, newest first, merges excluded. */
+export async function getBranchCommits(
+  repo: GitRepository,
+  baseRef: string,
+): Promise<BranchCommit[]> {
+  const mergeBase = await git(repo, ['merge-base', baseRef, 'HEAD']);
+  const output = await execFileAsync(
+    'git',
+    ['log', '--no-merges', `--format=${GIT_LOG_FORMAT}`, `${mergeBase}..HEAD`],
+    { cwd: repo.rootUri.fsPath, maxBuffer: 10 * 1024 * 1024 },
+  );
+  return parseGitLog(output.stdout);
+}
+
+/** Whether the repository has staged or unstaged changes. */
+export function hasUncommittedChanges(repo: GitRepository): boolean {
+  return repo.state.indexChanges.length > 0 || repo.state.workingTreeChanges.length > 0;
+}
+
+/** Whether a local branch called `name` exists. */
+export async function branchExists(repo: GitRepository, name: string): Promise<boolean> {
+  return refExists(repo, `refs/heads/${name}`);
+}
+
+/** Creates `name` from the current HEAD and checks it out, carrying uncommitted changes along. */
+export async function createAndCheckoutBranch(repo: GitRepository, name: string): Promise<void> {
+  await repo.createBranch(name, true);
 }

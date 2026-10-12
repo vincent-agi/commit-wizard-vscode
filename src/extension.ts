@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import { ConfigLoader } from './config/configLoader';
 import { watchWebviewBundles } from './dev/hotReload';
+import { registerNewBranch } from './branch/newBranch';
+import { registerGeneratePullRequest } from './pr/generatePullRequest';
 import { registerInstallHooks } from './hooks/installHooks';
 import { IssueFormPanel, NEW_ISSUE_COMMAND } from './issueForm/IssueFormPanel';
 import { CommitViewProvider } from './webview/CommitViewProvider';
@@ -25,6 +27,8 @@ export function activate(context: vscode.ExtensionContext): void {
       IssueFormPanel.reload(context.extensionUri);
     }),
     registerInstallHooks(configLoader),
+    registerNewBranch(configLoader),
+    registerGeneratePullRequest(configLoader),
     vscode.commands.registerCommand(NEW_ISSUE_COMMAND, () =>
       IssueFormPanel.show(context.extensionUri, configLoader),
     ),

@@ -81,6 +81,35 @@
         }
       }
     },
+    "issueTracker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["preset"],
+      "description": "Ready-made issue detection and links for a tracker.",
+      "properties": {
+        "preset": { "enum": ["jira", "linear", "github"] },
+        "baseUrl": {
+          "type": "string",
+          "pattern": "^https?://",
+          "description": "Root URL of the tracker, e.g. https://example.atlassian.net. Needed to link Jira and Linear tickets."
+        }
+      }
+    },
+    "issueUrlTemplate": {
+      "type": "string",
+      "pattern": "^https?://.*\\{id\\}",
+      "description": "URL linking an issue reference to its ticket, with an {id} placeholder. Overrides the tracker preset."
+    },
+    "branchPattern": {
+      "type": "string",
+      "pattern": "\\{slug\\}",
+      "default": "{type}/{issue}-{slug}",
+      "description": "Pattern of the New Branch command. Placeholders: {type}, {issue}, {slug}."
+    },
+    "prTemplate": {
+      "type": "string",
+      "description": "Markdown template for generated pull request descriptions. Placeholders: {{title}}, {{changes}}, {{breaking}}, {{issues}}."
+    },
     "issueTemplate": {
       "type": "string",
       "description": "Markdown template for issues created from the \"New Issue or Milestone\" form. Placeholders: {{title}}, {{context}}, {{goal}}, {{scope}}, {{acceptanceCriteria}}, {{notes}}."

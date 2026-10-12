@@ -16,7 +16,10 @@ export type WebviewToHostMessage =
   | { type: 'unstageAll' }
   | { type: 'setAmend'; amend: boolean }
   | { type: 'draftWithAi' }
-  | { type: 'clearDraft' };
+  | { type: 'clearDraft' }
+  | { type: 'newBranch' }
+  | { type: 'openUrl'; url: string }
+  | { type: 'lookupIssues'; references: string[] };
 
 /** Everything that depends on the current repository and branch. */
 export interface RepositoryState {
@@ -28,6 +31,8 @@ export interface RepositoryState {
   /** Messages of the latest commits, newest first. */
   recent: string[];
   changes: ChangeList;
+  /** URL with an `{id}` placeholder linking issue references, when a tracker is configured. */
+  issueUrlTemplate?: string;
 }
 
 /** Message shape sent from the extension host to the webview client. */
@@ -41,4 +46,5 @@ export type HostToWebviewMessage =
   | { type: 'commitFailed'; failure: CommitFailure }
   | { type: 'prefill'; input: CommitFormInput }
   | { type: 'aiResult'; draft: DraftFields }
-  | { type: 'aiFailed'; message: string };
+  | { type: 'aiFailed'; message: string }
+  | { type: 'issueTitles'; titles: Record<string, string> };

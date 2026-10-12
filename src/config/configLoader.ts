@@ -14,6 +14,8 @@ const SETTING_KEYS = [
   'titleMaxLength',
   'issuePattern',
   'protectedBranches',
+  'issueUrlTemplate',
+  'branchPattern',
 ] as const;
 
 /** Resolved configuration plus human-readable problems found while reading it. */
@@ -33,6 +35,17 @@ function readSettingsLayer(): { layer: ConfigLayer; warnings: string[] } {
     }
   }
   const { layer, errors } = parseConfigLayer(raw);
+  const trackerPreset = settings.get<string>('issueTracker.preset');
+  if (trackerPreset) {
+    const parsedTracker = parseConfigLayer({
+      issueTracker: {
+        preset: trackerPreset,
+        baseUrl: settings.get('issueTracker.baseUrl') || undefined,
+      },
+    });
+    Object.assign(layer, parsedTracker.layer);
+    errors.push(...parsedTracker.errors);
+  }
   const aiEnabled = settings.get<boolean>('ai.enabled');
   if (aiEnabled !== undefined) {
     layer.aiDraft = aiEnabled;

@@ -1,4 +1,6 @@
 import { COMMIT_TYPE_DESCRIPTIONS } from './types';
+import { ISSUE_TRACKER_PRESETS } from './issueTracker';
+import type { IssueTrackerConfig, IssueTrackerPreset } from './issueTracker';
 import type { SuggestionRule } from './suggest';
 import type { DefaultCommitType, Scope } from './types';
 
@@ -25,6 +27,14 @@ export interface CommitConfig {
    * placeholders. Absent: the standard layout is used.
    */
   issueTemplate?: string;
+  /** Issue tracker preset providing branch detection and links. */
+  issueTracker?: IssueTrackerConfig;
+  /** URL with an `{id}` placeholder linking a reference to its ticket. */
+  issueUrlTemplate?: string;
+  /** Pattern of the "New Branch" command: `{type}`, `{issue}` and `{slug}` placeholders. */
+  branchPattern?: string;
+  /** Markdown template for generated pull request descriptions. */
+  prTemplate?: string;
   /** Branch names or globs where committing asks for confirmation. */
   protectedBranches: string[];
   /** Team rules mapping changed paths to a suggested type/scope; first match wins. */
@@ -237,6 +247,52 @@ export function parseConfigLayer(raw: unknown): { layer: ConfigLayer; errors: st
     }
   }
 
+  if (raw.issueTracker !== undefined) {
+    const tracker = raw.issueTracker;
+    const preset = isRecord(tracker) ? tracker.preset : undefined;
+    const baseUrl = isRecord(tracker) ? nonEmptyString(tracker.baseUrl) : undefined;
+    if (
+      typeof preset !== 'string' ||
+      !ISSUE_TRACKER_PRESETS.includes(preset as IssueTrackerPreset)
+    ) {
+      errors.push(`"issueTracker.preset" must be one of: ${ISSUE_TRACKER_PRESETS.join(', ')}.`);
+    } else if (baseUrl !== undefined && !/^https?:\/\//i.test(baseUrl)) {
+      errors.push('"issueTracker.baseUrl" must start with http:// or https://.');
+    } else {
+      layer.issueTracker = {
+        preset: preset as IssueTrackerPreset,
+        ...(baseUrl ? { baseUrl } : {}),
+      };
+    }
+  }
+
+  if (raw.issueUrlTemplate !== undefined) {
+    const template = nonEmptyString(raw.issueUrlTemplate);
+    if (template && /^https?:\/\//i.test(template) && template.includes('{id}')) {
+      layer.issueUrlTemplate = template;
+    } else {
+      errors.push('"issueUrlTemplate" must be an http(s) URL containing {id}.');
+    }
+  }
+
+  if (raw.branchPattern !== undefined) {
+    const pattern = nonEmptyString(raw.branchPattern);
+    if (pattern && pattern.includes('{slug}')) {
+      layer.branchPattern = pattern;
+    } else {
+      errors.push('"branchPattern" must be a string containing {slug}.');
+    }
+  }
+
+  if (raw.prTemplate !== undefined) {
+    const template = nonEmptyString(raw.prTemplate);
+    if (template) {
+      layer.prTemplate = template;
+    } else {
+      errors.push('"prTemplate" must be a non-empty string.');
+    }
+  }
+
   if (raw.aiDraft !== undefined) {
     if (typeof raw.aiDraft === 'boolean') {
       layer.aiDraft = raw.aiDraft;
@@ -306,6 +362,18 @@ export function resolveConfig(layers: readonly ConfigLayer[]): {
     }
     if (layer.aiDraft !== undefined) {
       config.aiDraft = layer.aiDraft;
+    }
+    if (layer.issueTracker !== undefined) {
+      config.issueTracker = layer.issueTracker;
+    }
+    if (layer.issueUrlTemplate !== undefined) {
+      config.issueUrlTemplate = layer.issueUrlTemplate;
+    }
+    if (layer.branchPattern !== undefined) {
+      config.branchPattern = layer.branchPattern;
+    }
+    if (layer.prTemplate !== undefined) {
+      config.prTemplate = layer.prTemplate;
     }
   }
 

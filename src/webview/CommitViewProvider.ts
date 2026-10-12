@@ -5,18 +5,23 @@ import { describeCommitError } from '../core/commitError';
 import { clearDraft, draftKey, loadDraft, saveDraft } from '../core/drafts';
 import { formatCommitMessage } from '../core/formatCommit';
 import { parseCommitMessage } from '../core/parseCommit';
+import { githubIssueNumber, resolveTracker } from '../core/issueTracker';
 import { isHeadPushed, planPush } from '../core/pushDecision';
 import { isProtectedBranch } from '../core/protectedBranch';
 import { addScope } from '../core/scopeConfig';
 import type { Scope } from '../core/types';
 import type { CommitFormInput } from '../core/types';
+import type { CommitConfig } from '../core/commitConfig';
 import { ConfigLoader } from '../config/configLoader';
+import { createConformingBranch } from '../branch/newBranch';
+import { GitHubError, createGitHubClient } from '../github/githubClient';
 import {
   commitActiveRepository,
   getActiveRepository,
   getChangeList,
   getHeadInfo,
   getLastCommitMessage,
+  getGitHubRepository,
   getRecentMessages,
   getStagedPaths,
   pushWithPlan,
@@ -53,6 +58,7 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
 
   private readonly webviews = new Set<vscode.Webview>();
   private readonly watchedRepositories = new WeakSet<object>();
+  private readonly issueTitles = new Map<number, string>();
   private lastBranch: string | undefined;
   private pendingDraft: { key: string; input: CommitFormInput } | undefined;
   private draftTimer: NodeJS.Timeout | undefined;
@@ -130,6 +136,18 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
       case 'clearDraft':
         await this.discardDraft();
         return;
+      case 'newBranch':
+        await createConformingBranch(this.configLoader);
+        return;
+      case 'openUrl':
+        // Only web links: the webview must never be able to open arbitrary schemes.
+        if (/^https?:\/\//i.test(message.url)) {
+          await vscode.env.openExternal(vscode.Uri.parse(message.url));
+        }
+        return;
+      case 'lookupIssues':
+        await this.lookupIssues(webview, message.references);
+        return;
     }
   }
 
@@ -147,7 +165,10 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
   }
 
   /** Everything the form needs that depends on the repository and its current branch. */
-  private async repositoryState(issuePattern?: string): Promise<RepositoryState> {
+  private async repositoryState(
+    config: Pick<CommitConfig, 'issuePattern' | 'issueTracker' | 'issueUrlTemplate'>,
+  ): Promise<RepositoryState> {
+    const tracker = resolveTracker(config, getGitHubRepository());
     const repo = getActiveRepository();
     const branch = repo?.state.HEAD?.name;
     this.lastBranch = branch;
@@ -155,7 +176,8 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
 
     return {
       branch,
-      detectedIssue: branch ? extractIssueFromBranch(branch, issuePattern) : undefined,
+      detectedIssue: branch ? extractIssueFromBranch(branch, tracker.pattern) : undefined,
+      issueUrlTemplate: tracker.urlTemplate,
       draft: repo && branch ? loadDraft(this.workspaceState, this.draftKeyFor(repo)) : undefined,
       recent: repo ? await getRecentMessages(repo, RECENT_MESSAGES) : [],
       changes: repo ? getChangeList(repo) : { staged: [], unstaged: [] },
@@ -185,7 +207,7 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
       // Keep what was typed for the branch we are leaving before loading the next draft.
       await this.flushDraft();
       const { config } = await this.configLoader.load();
-      const state = await this.repositoryState(config.issuePattern);
+      const state = await this.repositoryState(config);
       this.postAll({ type: 'branchChanged', ...state });
       return;
     }
@@ -231,7 +253,7 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
    */
   private async sendInit(webview: vscode.Webview): Promise<void> {
     const { config, warnings } = await this.configLoader.load();
-    const state = await this.repositoryState(config.issuePattern);
+    const state = await this.repositoryState(config);
     this.postMessage(webview, { type: 'init', config, warnings, ...state });
   }
 
@@ -341,8 +363,14 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
         `"${head.name}" is a protected branch. Commit directly to it?`,
         { modal: true },
         'Commit anyway',
+        'Create a branch',
       );
-      if (choice !== 'Commit anyway') {
+      if (choice === 'Create a branch') {
+        // Carry on with the commit on the new branch only if one was actually created.
+        if (!(await createConformingBranch(this.configLoader))) {
+          return;
+        }
+      } else if (choice !== 'Commit anyway') {
         return;
       }
     }
@@ -506,6 +534,54 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
       clearTimeout(timer);
       cancellation.dispose();
     }
+  }
+
+  /** Looks up GitHub issue titles for the references; silent when not applicable or signed out. */
+  private async lookupIssues(webview: vscode.Webview, references: string[]): Promise<void> {
+    const github = getGitHubRepository();
+    if (!github) {
+      return;
+    }
+    const wanted = references
+      .map((reference) => ({ reference, number: githubIssueNumber(reference) }))
+      .filter(
+        (entry): entry is { reference: string; number: number } => entry.number !== undefined,
+      );
+    if (wanted.length === 0) {
+      return;
+    }
+
+    const missing = wanted.filter((entry) => !this.issueTitles.has(entry.number));
+    if (missing.length > 0) {
+      try {
+        const session = await vscode.authentication.getSession('github', ['repo'], {
+          createIfNone: false,
+          silent: true,
+        });
+        if (session) {
+          const client = createGitHubClient(session.accessToken, github);
+          await Promise.all(
+            missing.map(async (entry) => {
+              try {
+                this.issueTitles.set(entry.number, (await client.getIssue(entry.number)).title);
+              } catch (error) {
+                // 404 / 403 / network: the plain link stays, the title is just not shown.
+                if (!(error instanceof GitHubError)) throw error;
+              }
+            }),
+          );
+        }
+      } catch {
+        return;
+      }
+    }
+
+    const titles: Record<string, string> = {};
+    for (const entry of wanted) {
+      const title = this.issueTitles.get(entry.number);
+      if (title) titles[entry.reference] = title;
+    }
+    this.postMessage(webview, { type: 'issueTitles', titles });
   }
 
   private postAll(message: HostToWebviewMessage): void {

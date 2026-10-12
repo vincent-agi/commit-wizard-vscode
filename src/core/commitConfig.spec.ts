@@ -138,6 +138,43 @@ describe('parseConfigLayer (assistance options)', () => {
   });
 });
 
+describe('parseConfigLayer (workflow options)', () => {
+  it('accepts a tracker preset with an http(s) base URL', () => {
+    expect(
+      parseConfigLayer({ issueTracker: { preset: 'jira', baseUrl: 'https://acme.atlassian.net' } })
+        .layer.issueTracker,
+    ).toEqual({ preset: 'jira', baseUrl: 'https://acme.atlassian.net' });
+    expect(parseConfigLayer({ issueTracker: { preset: 'github' } }).layer.issueTracker).toEqual({
+      preset: 'github',
+    });
+  });
+
+  it('rejects unknown presets and non http base URLs', () => {
+    expect(parseConfigLayer({ issueTracker: { preset: 'trello' } }).errors).toHaveLength(1);
+    expect(parseConfigLayer({ issueTracker: 'jira' }).errors).toHaveLength(1);
+    expect(
+      parseConfigLayer({ issueTracker: { preset: 'jira', baseUrl: 'ftp://x' } }).errors,
+    ).toHaveLength(1);
+  });
+
+  it('requires an http(s) issueUrlTemplate with {id}', () => {
+    expect(
+      parseConfigLayer({ issueUrlTemplate: 'https://t.example/{id}' }).layer.issueUrlTemplate,
+    ).toBe('https://t.example/{id}');
+    expect(parseConfigLayer({ issueUrlTemplate: 'https://t.example/' }).errors).toHaveLength(1);
+    expect(parseConfigLayer({ issueUrlTemplate: 'javascript:{id}' }).errors).toHaveLength(1);
+  });
+
+  it('requires {slug} in a branch pattern and a non-empty PR template', () => {
+    expect(parseConfigLayer({ branchPattern: '{type}/{slug}' }).layer.branchPattern).toBe(
+      '{type}/{slug}',
+    );
+    expect(parseConfigLayer({ branchPattern: '{type}' }).errors).toHaveLength(1);
+    expect(parseConfigLayer({ prTemplate: '{{changes}}' }).layer.prTemplate).toBe('{{changes}}');
+    expect(parseConfigLayer({ prTemplate: ' ' }).errors).toHaveLength(1);
+  });
+});
+
 describe('resolveConfig', () => {
   it('returns the defaults when no layer defines anything', () => {
     expect(resolveConfig([{}, {}])).toEqual({ config: DEFAULT_CONFIG, errors: [] });

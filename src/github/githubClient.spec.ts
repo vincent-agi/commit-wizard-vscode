@@ -101,4 +101,27 @@ describe('createGitHubClient', () => {
     const error = await client.listLabels().catch((e: unknown) => e);
     expect((error as GitHubError).message).toBe('GitHub request failed (HTTP 502).');
   });
+
+  it('reads an issue title and state', async () => {
+    const { fetchFn, calls } = stub(200, { title: 'Crash', state: 'open', body: 'ignored' });
+    const issue = await createGitHubClient('t', repo, fetchFn).getIssue(12);
+    expect(issue).toEqual({ title: 'Crash', state: 'open' });
+    expect(calls[0].url).toBe('https://api.github.com/repos/o/r/issues/12');
+  });
+
+  it('creates a pull request', async () => {
+    const { fetchFn, calls } = stub(201, { number: 5, html_url: 'https://github.com/o/r/pull/5' });
+    const created = await createGitHubClient('t', repo, fetchFn).createPullRequest({
+      title: 'feat: x',
+      body: 'b',
+      head: 'feat/x',
+      base: 'main',
+    });
+    expect(created).toEqual({ number: 5, url: 'https://github.com/o/r/pull/5' });
+    expect(calls[0].url).toBe('https://api.github.com/repos/o/r/pulls');
+    expect(JSON.parse(calls[0].init?.body as string)).toMatchObject({
+      head: 'feat/x',
+      base: 'main',
+    });
+  });
 });

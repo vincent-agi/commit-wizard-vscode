@@ -36,6 +36,16 @@
     },
     "commands": [
       {
+        "command": "gitmojiCommit.newBranch",
+        "title": "New Branch from Type and Ticket",
+        "category": "Commit Wizard"
+      },
+      {
+        "command": "gitmojiCommit.generatePullRequest",
+        "title": "Generate Pull Request Description",
+        "category": "Commit Wizard"
+      },
+      {
         "command": "gitmojiCommit.newIssue",
         "title": "New Issue or Milestone (GitHub)",
         "category": "Commit Wizard"
@@ -122,6 +132,31 @@
           "default": false,
           "scope": "window",
           "description": "Offer a \"Draft with AI\" button that sends the staged diff (after you confirm) to a language model you choose in VS Code. Off by default; this setting is never read from .commit-wizard.json."
+        },
+        "gitmojiCommit.issueTracker.preset": {
+          "type": "string",
+          "enum": ["", "jira", "linear", "github"],
+          "default": "",
+          "scope": "window",
+          "description": "Issue tracker preset: detects ticket keys in branch names and links them. Overridden by .commit-wizard.json."
+        },
+        "gitmojiCommit.issueTracker.baseUrl": {
+          "type": "string",
+          "default": "",
+          "scope": "window",
+          "description": "Root URL of the tracker (e.g. https://example.atlassian.net), needed to link Jira and Linear tickets."
+        },
+        "gitmojiCommit.issueUrlTemplate": {
+          "type": "string",
+          "default": "",
+          "scope": "window",
+          "description": "URL linking a reference to its ticket, with an {id} placeholder. Overrides the tracker preset."
+        },
+        "gitmojiCommit.branchPattern": {
+          "type": "string",
+          "default": "",
+          "scope": "window",
+          "description": "Pattern of the New Branch command ({type}, {issue}, {slug}). Empty uses {type}/{issue}-{slug}."
         },
         "gitmojiCommit.issuePattern": {
           "type": "string",

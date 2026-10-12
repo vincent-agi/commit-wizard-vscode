@@ -60,6 +60,11 @@ export function generateHtml(webview: vscode.Webview, extensionUri: vscode.Uri):
   <div id="configWarnings" role="alert"></div>
   <div id="protectedBanner" role="alert"></div>
 
+  <div class="row" id="branchRow">
+    <span id="branchLabel"></span>
+    <button type="button" class="secondary" id="newBranch" title="Create a branch named from a type, a ticket and a description">New branch…</button>
+  </div>
+
   <details id="changesSection" open>
     <summary>Changes <span id="changesCount"></span></summary>
     <div class="row changes-actions">
@@ -102,6 +107,7 @@ export function generateHtml(webview: vscode.Webview, extensionUri: vscode.Uri):
     <select id="issueKeyword">${issueKeywordOptionsHtml()}</select>
     <input type="text" id="issue" placeholder="123, PROJ-45" title="One or several references, separated by spaces or commas" />
   </div>
+  <div id="issueLinks"></div>
 
   <label for="description">Short description</label>
   <input type="text" id="description" placeholder="add live preview component" />

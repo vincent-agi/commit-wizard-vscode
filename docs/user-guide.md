@@ -97,6 +97,25 @@ The **Changes** section at the top of the panel mirrors the Source Control view.
    (any of these three auto-closes the issue when the commit is merged), or **See also** (links a
    related issue without closing it). A `#` is added only to purely numeric values (`123` becomes
    `#123`); `#456` stays `#456` and Jira-style keys like `PROJ-123` are left untouched.
+   **Links and titles**: with a tracker configured, each reference in the field becomes a
+   clickable link under it (it opens in your browser). For GitHub repositories the issue title is
+   shown next to numeric references when you are signed in to GitHub in VS Code; it is looked up
+   silently, cached, and simply omitted when offline, signed out or on a 403/404. Set it up with
+   `issueTracker` in `.commit-wizard.json` (or the `gitmojiCommit.issueTracker.*` settings):
+
+   ```json
+   { "issueTracker": { "preset": "jira", "baseUrl": "https://acme.atlassian.net" } }
+   ```
+
+   | Preset | Detects in the branch name | Link |
+   | --- | --- | --- |
+   | `jira` | keys such as `PROJ-123` | `<baseUrl>/browse/PROJ-123` |
+   | `linear` | keys such as `ENG-42` | `<baseUrl>/issue/ENG-42` |
+   | `github` | `#123` / `issue-123` (built in) | `https://github.com/<owner>/<repo>/issues/123` |
+
+   An explicit `issuePattern` or `issueUrlTemplate` (an http(s) URL containing `{id}`) always
+   overrides what the preset provides. Without `baseUrl`, Jira and Linear keys are still
+   detected but not linked.
 5. **Short description**: the one-line summary. A live character counter turns amber past 50
    characters and red past 72 (both thresholds are configurable, see below).
 6. **Body**: optional multi-line details, rendered as its own paragraph after a blank line.
@@ -196,12 +215,43 @@ automatically when it changes — no window reload needed.
   [Creating issues and milestones](#creating-issues-and-milestones).
 - **`protectedBranches`**: see [Sending the commit](#sending-the-commit).
 - **`suggestionRules`**: see [Choosing what to commit](#choosing-what-to-commit).
+- **`issueTracker`**, **`issueUrlTemplate`**, **`branchPattern`**, **`prTemplate`**: see
+  [Branches and pull requests](#branches-and-pull-requests) and the issue field above.
 - **`issuePattern`**: regular expression applied to the branch name; the first capture group (or
   the whole match) is used. Invalid patterns are ignored.
 
 **Precedence**: `.commit-wizard.json` > VS Code settings > built-in defaults, field by field
 (only `scopes` are merged). An invalid field is ignored and reported in a warning banner at the top
 of the panel; the other fields still apply, and an invalid JSON file falls back to the settings.
+
+## Branches and pull requests
+
+**New branch**: click **New branch…** at the top of the panel, or run **Commit Wizard: New Branch
+from Type and Ticket**. You pick a type, an optional ticket and a description; the name comes from
+`branchPattern` (default `{type}/{issue}-{slug}`, placeholders `{type}`, `{issue}`, `{slug}`), for
+example `feat/123-add-login` or `fix/PROJ-42-crash-on-start`. The description is turned into an
+ASCII slug (accents removed, hyphens) and, without a ticket, the `{issue}` part disappears with
+its separator. The name is checked against Git's branch-name rules; an invalid or existing name
+shows the reason and changes nothing. With uncommitted changes you are asked first, since they
+move with you to the new branch. The same flow is offered when you try to commit on a
+protected branch.
+
+**Pull request description**: run **Commit Wizard: Generate Pull Request Description**. The
+commits of the current branch (since its merge-base with `origin/HEAD`, `main` or `master`) are
+turned into an editable Markdown document: a **Breaking changes** section first when any, the
+**Changes** grouped by type (Features, Bug fixes, Performance, ...) with scope and short hash, and
+**Related issues** gathering the `Closes`/`Fixes`/`Refs` footers once each. The title is the commit
+header for a single commit, otherwise derived from the branch name. Then choose:
+
+- **Copy to clipboard**, or
+- **Create pull request** on GitHub with your VS Code sign-in. Only the first line (title) and
+  the rest (body) of the document, as you edited them, are sent, and only after this click. The
+  branch must already be pushed (use **Commit & Push**).
+
+Commits that are not Conventional Commits are listed under **Other changes**. A branch with no
+commit ahead of the base shows an explanation instead. To use your own layout, set `prTemplate`
+in `.commit-wizard.json` with the placeholders `{{title}}`, `{{changes}}`, `{{breaking}}` and
+`{{issues}}`.
 
 ## Creating issues and milestones
 
@@ -293,6 +343,9 @@ regenerate it.
 | `gitmojiCommit.emojis` | `true` | Prefix messages with a Gitmoji; `false` hides the dropdown. |
 | `gitmojiCommit.protectedBranches` | `["main", "master"]` | Branch names or globs where committing asks for confirmation. |
 | `gitmojiCommit.ai.enabled` | `false` | Offer the "Draft with AI" button (personal setting, ignored in the team file). |
+| `gitmojiCommit.issueTracker.preset` / `.baseUrl` | `""` | Tracker preset (`jira`, `linear`, `github`) and its root URL. |
+| `gitmojiCommit.issueUrlTemplate` | `""` | Link template with `{id}`; overrides the preset. |
+| `gitmojiCommit.branchPattern` | `""` | Pattern of the New Branch command; empty uses `{type}/{issue}-{slug}`. |
 | `gitmojiCommit.issuePattern` | `""` | Regex to detect the issue in the branch name; empty uses the built-in detection. |
 | `gitmojiCommit.titleWarningLength` | `50` | Title length that triggers the amber warning. |
 | `gitmojiCommit.titleMaxLength` | `72` | Title length that triggers the red warning. |

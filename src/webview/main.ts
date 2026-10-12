@@ -4,6 +4,7 @@ import type { CommitConfig } from '../core/commitConfig';
 import type { ChangeList, ChangedFile } from '../core/changes';
 import type { DraftFields } from '../core/aiDraft';
 import { formatCommitMessage } from '../core/formatCommit';
+import { buildIssueLinks, githubIssueNumber } from '../core/issueTracker';
 import { parseCommitMessage } from '../core/parseCommit';
 import { isProtectedBranch } from '../core/protectedBranch';
 import { suggestFromPaths } from '../core/suggest';
@@ -65,11 +66,17 @@ const changesHint = $<HTMLDivElement>('changesHint');
 const suggestionRow = $<HTMLDivElement>('suggestionRow');
 const suggestionText = $<HTMLSpanElement>('suggestionText');
 const applySuggestionButton = $<HTMLButtonElement>('applySuggestion');
+const branchLabel = $<HTMLSpanElement>('branchLabel');
+const newBranchButton = $<HTMLButtonElement>('newBranch');
+const issueLinks = $<HTMLDivElement>('issueLinks');
 
 let config: CommitConfig = DEFAULT_CONFIG;
 let changes: ChangeList = { staged: [], unstaged: [] };
 let branch: string | undefined;
 let detectedIssue: string | undefined;
+let issueUrlTemplate: string | undefined;
+let issueTitles: Record<string, string> = {};
+let lookupTimer: number | undefined;
 let recent: string[] = [];
 let suggestion: Suggestion | undefined;
 let committing = false;
@@ -196,7 +203,41 @@ function renderActions(): void {
   changesHint.textContent = nothingStaged ? 'Stage some changes to commit them.' : '';
 }
 
+function renderIssueLinks(): void {
+  issueLinks.textContent = '';
+  for (const link of buildIssueLinks(issueInput.value, issueUrlTemplate)) {
+    const anchor = document.createElement('a');
+    anchor.textContent = link.label;
+    anchor.dataset.url = link.url;
+    anchor.tabIndex = 0;
+    anchor.setAttribute('role', 'link');
+    issueLinks.appendChild(anchor);
+    const title = issueTitles[link.label];
+    if (title) {
+      const text = document.createElement('span');
+      text.className = 'issue-title';
+      text.textContent = ` ${title}`;
+      issueLinks.appendChild(text);
+    }
+    issueLinks.appendChild(document.createTextNode('  '));
+  }
+}
+
+/** Asks the host for GitHub issue titles of the numeric references, once typing pauses. */
+function scheduleIssueLookup(): void {
+  window.clearTimeout(lookupTimer);
+  lookupTimer = window.setTimeout(() => {
+    const references = issueInput.value
+      .split(/[\s,]+/)
+      .filter((reference) => githubIssueNumber(reference) !== undefined);
+    if (hostReady && issueUrlTemplate && references.length > 0) {
+      vscode.postMessage({ type: 'lookupIssues', references });
+    }
+  }, 500);
+}
+
 function renderBranch(): void {
+  branchLabel.textContent = branch ? `Branch: ${branch}` : 'No branch';
   const protectedNow = isProtectedBranch(branch, config.protectedBranches);
   protectedBanner.classList.toggle('visible', protectedNow);
   protectedBanner.textContent = protectedNow
@@ -238,6 +279,7 @@ function render(): void {
 
   renderSuggestion();
   renderActions();
+  renderIssueLinks();
 
   vscode.setState(snapshotControls(persistedControls));
   if (hostReady) {
@@ -296,6 +338,8 @@ function applyRepository(state: RepositoryState): void {
   detectedIssue = state.detectedIssue;
   recent = state.recent;
   changes = state.changes;
+  issueUrlTemplate = state.issueUrlTemplate;
+  issueTitles = {};
   renderChanges();
   renderRecent();
   renderBranch();
@@ -360,6 +404,20 @@ typeSelect.addEventListener('change', () => {
   if (emoji && config.emojis) {
     selectGitmoji(emoji);
     render();
+  }
+});
+
+newBranchButton.addEventListener('click', () => vscode.postMessage({ type: 'newBranch' }));
+issueInput.addEventListener('input', scheduleIssueLookup);
+issueLinks.addEventListener('click', (event) => {
+  const url = (event.target as HTMLElement).closest('a')?.dataset.url;
+  if (url) vscode.postMessage({ type: 'openUrl', url });
+});
+issueLinks.addEventListener('keydown', (event) => {
+  const url = (event.target as HTMLElement).closest('a')?.dataset.url;
+  if (url && (event.key === 'Enter' || event.key === ' ')) {
+    event.preventDefault();
+    vscode.postMessage({ type: 'openUrl', url });
   }
 });
 
@@ -457,6 +515,7 @@ window.addEventListener('message', (event: MessageEvent<HostToWebviewMessage>) =
       }
       hostReady = true;
       render();
+      scheduleIssueLookup();
       break;
     case 'configUpdated':
       applyConfig(message.config, message.warnings);
@@ -503,6 +562,10 @@ window.addEventListener('message', (event: MessageEvent<HostToWebviewMessage>) =
       drafting = false;
       commitStatus.textContent = '';
       applyAiDraft(message.draft);
+      break;
+    case 'issueTitles':
+      issueTitles = { ...issueTitles, ...message.titles };
+      renderIssueLinks();
       break;
     case 'aiFailed':
       drafting = false;

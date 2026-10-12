@@ -108,6 +108,30 @@ export function getStyles(): string {
     [hidden] {
       display: none !important;
     }
+    #branchRow {
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    #branchLabel {
+      font-size: 0.85em;
+      color: var(--vscode-descriptionForeground);
+      word-break: break-all;
+    }
+    #issueLinks {
+      font-size: 0.85em;
+      margin-top: 2px;
+    }
+    #issueLinks:empty {
+      display: none;
+    }
+    #issueLinks a {
+      color: var(--vscode-textLink-foreground);
+      cursor: pointer;
+    }
+    .issue-title {
+      color: var(--vscode-descriptionForeground);
+    }
     #protectedBanner {
       display: none;
       margin-bottom: 8px;
