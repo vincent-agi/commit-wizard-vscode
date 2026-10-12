@@ -60,6 +60,10 @@
       "default": 72,
       "description": "Short-description length at which the counter turns red."
     },
+    "issueTemplate": {
+      "type": "string",
+      "description": "Markdown template for issues created from the \"New Issue or Milestone\" form. Placeholders: {{title}}, {{context}}, {{goal}}, {{scope}}, {{acceptanceCriteria}}, {{notes}}."
+    },
     "issuePattern": {
       "type": "string",
       "description": "Regular expression applied to the branch name to detect the issue. The first capture group (or the whole match) is used."

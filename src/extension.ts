@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { ConfigLoader } from './config/configLoader';
 import { registerInstallHooks } from './hooks/installHooks';
+import { IssueFormPanel, NEW_ISSUE_COMMAND } from './issueForm/IssueFormPanel';
 import { CommitViewProvider } from './webview/CommitViewProvider';
 
 /**
@@ -15,6 +16,9 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     configLoader,
     registerInstallHooks(configLoader),
+    vscode.commands.registerCommand(NEW_ISSUE_COMMAND, () =>
+      IssueFormPanel.show(context.extensionUri, configLoader),
+    ),
     vscode.window.registerWebviewViewProvider(CommitViewProvider.viewType, provider),
   );
 }

@@ -33,6 +33,11 @@
     },
     "commands": [
       {
+        "command": "gitmojiCommit.newIssue",
+        "title": "New Issue or Milestone (GitHub)",
+        "category": "Commit Wizard"
+      },
+      {
         "command": "gitmojiCommit.installHooks",
         "title": "Install Git Hooks (husky / lefthook)",
         "category": "Commit Wizard"

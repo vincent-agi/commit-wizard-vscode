@@ -131,12 +131,52 @@ automatically when it changes — no window reload needed.
 - **`scopes`**: merged by name with scopes from the VS Code settings; the file wins on a clash.
 - **`titleWarningLength` / `titleMaxLength`**: thresholds of the character counter. The warning
   length must not exceed the maximum, otherwise both fall back to 50 / 72.
+- **`issueTemplate`**: Markdown body template for the issue form; see
+  [Creating issues and milestones](#creating-issues-and-milestones).
 - **`issuePattern`**: regular expression applied to the branch name; the first capture group (or
   the whole match) is used. Invalid patterns are ignored.
 
 **Precedence**: `.commit-wizard.json` > VS Code settings > built-in defaults, field by field
 (only `scopes` are merged). An invalid field is ignored and reported in a warning banner at the top
 of the panel; the other fields still apply, and an invalid JSON file falls back to the settings.
+
+## Creating issues and milestones
+
+Run **Commit Wizard: New Issue or Milestone (GitHub)** from the Command Palette to open a form
+that creates a GitHub issue or milestone with a consistent structure. It targets the GitHub
+repository of the workspace (the `origin` remote, or the first github.com remote).
+
+**Signing in**: the extension uses VS Code's built-in GitHub authentication with the `repo` scope;
+it never asks for or stores a token. If you are not signed in yet, click **Sign in to GitHub**
+(you are also asked when you submit). Signing in loads the repository's open milestones and labels.
+
+**Issue mode**
+
+- **Type**, **Scope** and **Title** build a Conventional-Commits-style title: `feat(webview): …`.
+  Types and scopes come from your configuration.
+- **Context**, **Goal**, **Scope** (one item per line, rendered as bullets), **Acceptance
+  criteria** (one per line, rendered as `- [ ]` checkboxes) and **Notes** fill the body; empty
+  sections are left out.
+- Pick **Labels** and a **Milestone** from the repository, and optionally **Assignees**
+  (GitHub logins separated by spaces or commas).
+
+**Milestone mode**: a title, an optional description and an optional due date (`YYYY-MM-DD`).
+
+The **preview** shows the exact title and body that will be sent. Nothing is sent to GitHub until
+you click **Create issue** / **Create milestone**; the result is a link to the new item. If GitHub
+refuses (no write access, repository not found, network down, invalid data) the reason is shown
+in the panel and your input is kept.
+
+**Custom template**: to use your own body layout, add an `issueTemplate` string to
+`.commit-wizard.json` with any of the placeholders `{{title}}`, `{{context}}`, `{{goal}}`,
+`{{scope}}`, `{{acceptanceCriteria}}` and `{{notes}}`. The template owns its headings, empty
+placeholders leave no blank gaps, and unknown placeholders are kept as typed.
+
+```json
+{
+  "issueTemplate": "### Background\n{{context}}\n\n### Definition of done\n{{acceptanceCriteria}}"
+}
+```
 
 ## Git hooks
 

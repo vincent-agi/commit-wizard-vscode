@@ -19,6 +19,11 @@ export interface CommitConfig {
   titleMaxLength: number;
   /** Custom regular expression source used to detect an issue in the branch name. */
   issuePattern?: string;
+  /**
+   * Markdown template for issues created from the "new issue" form, with `{{context}}`-style
+   * placeholders. Absent: the standard layout is used.
+   */
+  issueTemplate?: string;
 }
 
 /** One source of configuration (VS Code settings or the repository file); every field optional. */
@@ -187,6 +192,15 @@ export function parseConfigLayer(raw: unknown): { layer: ConfigLayer; errors: st
     }
   }
 
+  if (raw.issueTemplate !== undefined) {
+    const template = nonEmptyString(raw.issueTemplate);
+    if (template) {
+      layer.issueTemplate = template;
+    } else {
+      errors.push('"issueTemplate" must be a non-empty string.');
+    }
+  }
+
   return { layer, errors };
 }
 
@@ -227,6 +241,9 @@ export function resolveConfig(layers: readonly ConfigLayer[]): {
     }
     if (layer.issuePattern !== undefined) {
       config.issuePattern = layer.issuePattern;
+    }
+    if (layer.issueTemplate !== undefined) {
+      config.issueTemplate = layer.issueTemplate;
     }
   }
 

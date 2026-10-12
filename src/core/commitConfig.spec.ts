@@ -82,6 +82,15 @@ describe('parseConfigLayer', () => {
     expect(errors).toHaveLength(3);
   });
 
+  it('accepts a non-empty issueTemplate and rejects an empty one', () => {
+    expect(parseConfigLayer({ issueTemplate: '## Why\n{{context}}' }).layer.issueTemplate).toBe(
+      '## Why\n{{context}}',
+    );
+    const { layer, errors } = parseConfigLayer({ issueTemplate: '  ' });
+    expect(layer).toEqual({});
+    expect(errors).toHaveLength(1);
+  });
+
   it('rejects an invalid issue pattern but keeps other valid fields', () => {
     const { layer, errors } = parseConfigLayer({ issuePattern: '(', emojis: false });
     expect(layer).toEqual({ emojis: false });
@@ -129,6 +138,11 @@ describe('resolveConfig', () => {
       { name: 'core', description: 'Core' },
       { name: 'web', description: 'new' },
     ]);
+  });
+
+  it('lets a higher layer override the issue template', () => {
+    const { config } = resolveConfig([{ issueTemplate: 'a' }, { issueTemplate: 'b' }]);
+    expect(config.issueTemplate).toBe('b');
   });
 
   it('falls back to default thresholds and reports when warning exceeds maximum', () => {

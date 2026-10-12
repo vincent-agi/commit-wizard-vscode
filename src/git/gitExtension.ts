@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import { parseGitHubRemote } from '../core/githubRemote';
+import type { GitHubRepo } from '../core/githubRemote';
 
 /** Minimal shape of the built-in `vscode.git` extension's exported API (version 1). */
 interface GitApi {
@@ -6,7 +8,10 @@ interface GitApi {
 }
 
 interface GitRepository {
-  state: { HEAD?: { name?: string } };
+  state: {
+    HEAD?: { name?: string };
+    remotes: { name: string; fetchUrl?: string; pushUrl?: string }[];
+  };
   commit(message: string): Promise<void>;
 }
 
@@ -44,4 +49,22 @@ export async function commitActiveRepository(message: string): Promise<boolean> 
 /** Returns the active repository's current branch name, or `undefined` if unavailable. */
 export function getCurrentBranchName(): string | undefined {
   return getActiveRepository()?.state.HEAD?.name;
+}
+
+/**
+ * Returns the GitHub repository the active Git repository points at, preferring the `origin`
+ * remote, or `undefined` when there is no repository or no github.com remote.
+ */
+export function getGitHubRepository(): GitHubRepo | undefined {
+  const remotes = getActiveRepository()?.state.remotes ?? [];
+  const ordered = [...remotes].sort(
+    (a, b) => Number(b.name === 'origin') - Number(a.name === 'origin'),
+  );
+  for (const remote of ordered) {
+    const parsed = parseGitHubRemote(remote.fetchUrl ?? remote.pushUrl ?? '');
+    if (parsed) {
+      return parsed;
+    }
+  }
+  return undefined;
 }

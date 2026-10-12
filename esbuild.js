@@ -27,15 +27,33 @@ const webviewOptions = {
   minify: false,
 };
 
+/** @type {import('esbuild').BuildOptions} */
+const issueFormOptions = {
+  entryPoints: ['src/issueForm/main.ts'],
+  bundle: true,
+  outfile: 'dist/issueForm.js',
+  format: 'iife',
+  platform: 'browser',
+  target: 'es2020',
+  sourcemap: true,
+  minify: false,
+};
+
 async function run() {
   if (watch) {
     const contexts = await Promise.all(
-      [extensionOptions, webviewOptions].map((options) => esbuild.context(options)),
+      [extensionOptions, webviewOptions, issueFormOptions].map((options) =>
+        esbuild.context(options),
+      ),
     );
     await Promise.all(contexts.map((ctx) => ctx.watch()));
     console.log('esbuild watching...');
   } else {
-    await Promise.all([esbuild.build(extensionOptions), esbuild.build(webviewOptions)]);
+    await Promise.all([
+      esbuild.build(extensionOptions),
+      esbuild.build(webviewOptions),
+      esbuild.build(issueFormOptions),
+    ]);
   }
 }
 
