@@ -1,4 +1,6 @@
 import type { GitHubRepo } from '../core/githubRemote';
+import { summarizeCheckRuns } from '../core/releasePr';
+import type { CheckRunSummary, ReleasePrCandidate } from '../core/releasePr';
 
 /** Error raised for a failed GitHub API call, with a message fit to show the user. */
 export class GitHubError extends Error {
@@ -124,6 +126,32 @@ export function createGitHubClient(
         payload,
       );
       return { number: created.number, url: created.html_url };
+    },
+
+    async listOpenPullRequests(): Promise<ReleasePrCandidate[]> {
+      const pulls = await request<
+        {
+          number: number;
+          title: string;
+          html_url: string;
+          labels: { name: string }[];
+          head: { sha: string };
+        }[]
+      >('/pulls?state=open&per_page=50', 'GET');
+      return pulls.map((pull) => ({
+        number: pull.number,
+        title: pull.title,
+        url: pull.html_url,
+        labels: pull.labels.map((label) => label.name),
+        headSha: pull.head.sha,
+      }));
+    },
+
+    async getCheckSummary(sha: string): Promise<CheckRunSummary> {
+      const result = await request<{
+        check_runs: { status: string; conclusion: string | null }[];
+      }>(`/commits/${encodeURIComponent(sha)}/check-runs?per_page=100`, 'GET');
+      return summarizeCheckRuns(result.check_runs);
     },
 
     async getIssue(number: number): Promise<{ title: string; state: string }> {

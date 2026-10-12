@@ -124,4 +124,40 @@ describe('createGitHubClient', () => {
       base: 'main',
     });
   });
+
+  it('lists open pull requests with their labels and head sha', async () => {
+    const { fetchFn, calls } = stub(200, [
+      {
+        number: 9,
+        title: 'chore(main): release 0.2.0',
+        html_url: 'https://github.com/o/r/pull/9',
+        labels: [{ name: 'autorelease: pending' }],
+        head: { sha: 'deadbeef' },
+        body: 'ignored',
+      },
+    ]);
+    const pulls = await createGitHubClient('t', repo, fetchFn).listOpenPullRequests();
+    expect(pulls).toEqual([
+      {
+        number: 9,
+        title: 'chore(main): release 0.2.0',
+        url: 'https://github.com/o/r/pull/9',
+        labels: ['autorelease: pending'],
+        headSha: 'deadbeef',
+      },
+    ]);
+    expect(calls[0].url).toContain('/pulls?state=open');
+  });
+
+  it('summarizes the check runs of a commit', async () => {
+    const { fetchFn, calls } = stub(200, {
+      check_runs: [
+        { status: 'completed', conclusion: 'success' },
+        { status: 'in_progress', conclusion: null },
+      ],
+    });
+    const summary = await createGitHubClient('t', repo, fetchFn).getCheckSummary('abc');
+    expect(summary.state).toBe('pending');
+    expect(calls[0].url).toContain('/commits/abc/check-runs');
+  });
 });
