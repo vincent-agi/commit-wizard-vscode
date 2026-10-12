@@ -1,3 +1,4 @@
+import { parseCoAuthors } from '../core/coAuthors';
 import { formatCommitMessage } from '../core/formatCommit';
 import { titleLengthStatus } from '../core/titleLength';
 import type { CommitFormInput, CommitType, IssueKeyword, Scope } from '../core/types';
@@ -25,6 +26,13 @@ const breakingChangeDescriptionRow = document.getElementById(
 const breakingChangeDescriptionTextarea = document.getElementById(
   'breakingChangeDescription',
 ) as HTMLTextAreaElement;
+const coAuthorsTextarea = document.getElementById('coAuthors') as HTMLTextAreaElement;
+const coAuthorsError = document.getElementById('coAuthorsError') as HTMLDivElement;
+const commitStatus = document.getElementById('commitStatus') as HTMLDivElement;
+const commitError = document.getElementById('commitError') as HTMLDivElement;
+const commitErrorSummary = document.getElementById('commitErrorSummary') as HTMLDivElement;
+const commitErrorDetails = document.getElementById('commitErrorDetails') as HTMLDetailsElement;
+const commitErrorOutput = document.getElementById('commitErrorOutput') as HTMLPreElement;
 const previewBox = document.getElementById('preview') as HTMLDivElement;
 const commitNowButton = document.getElementById('commitNow') as HTMLButtonElement;
 
@@ -42,6 +50,7 @@ function currentInput(): CommitFormInput {
     body: bodyTextarea.value || undefined,
     breakingChange: breakingChangeCheckbox.checked,
     breakingChangeDescription: breakingChangeDescriptionTextarea.value || undefined,
+    coAuthors: parseCoAuthors(coAuthorsTextarea.value).valid,
   };
 }
 
@@ -55,6 +64,10 @@ function render(): void {
   charCounter.classList.toggle('over', status === 'over');
 
   breakingChangeDescriptionRow.classList.toggle('visible', breakingChangeCheckbox.checked);
+
+  const { invalid } = parseCoAuthors(coAuthorsTextarea.value);
+  coAuthorsError.textContent =
+    invalid.length > 0 ? `Ignored (expected "Name <email>"): ${invalid.join('; ')}` : '';
 
   previewBox.textContent = input.description ? formatCommitMessage(input) : '';
 
@@ -86,6 +99,7 @@ for (const element of [
   bodyTextarea,
   breakingChangeCheckbox,
   breakingChangeDescriptionTextarea,
+  coAuthorsTextarea,
 ]) {
   element.addEventListener('input', render);
   element.addEventListener('change', render);
@@ -94,6 +108,25 @@ for (const element of [
 addScopeButton.addEventListener('click', () => {
   vscode.postMessage({ type: 'addScope' });
 });
+
+function hideCommitError(): void {
+  commitError.classList.remove('visible');
+  commitErrorSummary.textContent = '';
+  commitErrorOutput.textContent = '';
+}
+
+function setCommitting(committing: boolean): void {
+  commitNowButton.disabled = committing;
+  commitStatus.textContent = committing ? 'Committing… Git hooks may take a moment.' : '';
+}
+
+function clearMessageFields(): void {
+  descriptionInput.value = '';
+  bodyTextarea.value = '';
+  breakingChangeCheckbox.checked = false;
+  breakingChangeDescriptionTextarea.value = '';
+  coAuthorsTextarea.value = '';
+}
 
 commitNowButton.addEventListener('click', () => {
   vscode.postMessage({ type: 'commitNow', input: currentInput() });
@@ -110,6 +143,21 @@ window.addEventListener('message', (event: MessageEvent<HostToWebviewMessage>) =
   } else if (message.type === 'scopesUpdated') {
     setScopes(message.scopes);
     render();
+  } else if (message.type === 'commitStarted') {
+    hideCommitError();
+    setCommitting(true);
+  } else if (message.type === 'commitSucceeded') {
+    setCommitting(false);
+    clearMessageFields();
+    render();
+  } else if (message.type === 'commitFailed') {
+    // Form content is deliberately left untouched so the user can fix the problem and retry.
+    setCommitting(false);
+    commitErrorSummary.textContent = message.failure.summary;
+    commitErrorOutput.textContent = message.failure.details;
+    commitErrorDetails.hidden = !message.failure.details;
+    commitErrorDetails.open = message.failure.kind === 'hook';
+    commitError.classList.add('visible');
   }
 });
 

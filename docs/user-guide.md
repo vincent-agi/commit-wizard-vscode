@@ -60,30 +60,43 @@ folder first.
    picking a Type does not change it, and picking a gitmoji does not change the Type.
 3. **Scope**: optional. Pick from the dropdown or leave blank.
 4. **Issue / Ticket ID**: auto-filled from the current Git branch name when it contains a
-   ticket-like token — `feature/123-login` becomes `123`; a plain issue number becomes
-   `#123`. Edit or clear it freely; it is only ever a starting suggestion. A dropdown next to it
-   picks the GitHub/GitLab footer keyword: **Refs** (default, just links the issue), **Closes**,
-   **Fixes**, **Resolves** (any of these three auto-closes the issue when the commit is merged),
-   or **See also** (links a related issue without closing it). The issue value is used exactly as
-   typed — no `#` is added automatically, so a Jira-style key like `123` isn't mangled and a
-   branch-detected `#456` doesn't turn into `##456`.
+   ticket-like token — `feature/123-login` becomes `123`. Edit or clear it freely; it is only a
+   starting suggestion. You can enter **several references** separated by spaces or commas
+   (`12, PROJ-3`); each gets its own footer line. A dropdown next to it picks the GitHub/GitLab
+   footer keyword: **Refs** (default, just links the issue), **Closes**, **Fixes**, **Resolves**
+   (any of these three auto-closes the issue when the commit is merged), or **See also** (links a
+   related issue without closing it). A `#` is added only to purely numeric values (`123` becomes
+   `#123`); `#456` stays `#456` and Jira-style keys like `PROJ-123` are left untouched.
 5. **Short description**: the one-line summary. A live character counter turns amber past 50
    characters and red past 72 (both thresholds are configurable, see below).
-6. **Body**: optional multi-line details, rendered as its own paragraph.
-7. **Breaking change**: tick the checkbox to reveal a description field; its content is emitted
-   as a `BREAKING CHANGE:` footer.
+6. **Body**: optional multi-line details, rendered as its own paragraph after a blank line.
+7. **Breaking change**: tick the checkbox to add `!` after the type/scope (`feat(api)!: …`) and
+   reveal a description field; its content is emitted as a `BREAKING CHANGE:` footer.
+8. **Co-authored-by**: optional, one `Name <email>` per line, each emitted as a
+   `Co-authored-by:` footer. Lines that don't match the format are flagged under the field and
+   left out of the message.
+
+All footers (`BREAKING CHANGE`, issue references, `Co-authored-by`) are grouped in one block at the
+end of the message, following the Git trailer format.
 
 The **preview box** updates on every keystroke so you always see exactly what will be written.
 
 ## Sending the commit
 
-Click **Fill Commit**. The formatted message is written into the active repository's Source
-Control input box, exactly as if you had typed it there. Nothing is committed automatically —
-review it in the Source Control view and commit as usual.
+Click **Commit now**. The message is committed to the active repository's staged changes. Your
+Git hooks (`pre-commit`, `commit-msg`, …) always run — the extension never bypasses them with
+`--no-verify`. The button is disabled while Git and the hooks run.
 
-If no Git repository is detected in the current workspace, you'll see a warning and the form
-keeps your input untouched so you can fix the underlying issue (e.g. open the right folder) and
-retry.
+On success the description, body, breaking change and co-author fields are cleared.
+
+If the commit fails, your input is kept and an error box appears under the button:
+
+- **A hook rejected the commit**: the headline names the hook when it can be identified, and the
+  hook's output (colors stripped, truncated if very long) is expanded below so you can fix the
+  lint/test/commitlint error and retry.
+- **Nothing to commit**: stage some changes first.
+- **No Git repository**: open a folder that contains one.
+- **Any other Git error**: the first line is shown as the headline, with the full output available.
 
 ## Configuration reference
 

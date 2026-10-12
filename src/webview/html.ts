@@ -98,7 +98,7 @@ export function generateHtml(webview: vscode.Webview, extensionUri: vscode.Uri):
   <label for="issue">Issue / Ticket ID</label>
   <div class="row">
     <select id="issueKeyword">${issueKeywordOptionsHtml()}</select>
-    <input type="text" id="issue" placeholder="123" />
+    <input type="text" id="issue" placeholder="123, PROJ-45" title="One or several references, separated by spaces or commas" />
   </div>
 
   <label for="description">Short description</label>
@@ -117,10 +117,22 @@ export function generateHtml(webview: vscode.Webview, extensionUri: vscode.Uri):
     <textarea id="breakingChangeDescription" placeholder="Describe the breaking change"></textarea>
   </div>
 
+  <label for="coAuthors">Co-authored-by</label>
+  <textarea id="coAuthors" placeholder="One per line: Name &lt;email@example.com&gt;"></textarea>
+  <div id="coAuthorsError" role="alert"></div>
+
   <label>Preview</label>
   <div id="preview"></div>
 
   <button type="button" id="commitNow">Commit now</button>
+  <div id="commitStatus" role="status" aria-live="polite"></div>
+  <div id="commitError" role="alert">
+    <div id="commitErrorSummary"></div>
+    <details id="commitErrorDetails">
+      <summary>Show output</summary>
+      <pre id="commitErrorOutput"></pre>
+    </details>
+  </div>
 
   <script nonce="${nonce}" src="${scriptUri}"></script>
 </body>
