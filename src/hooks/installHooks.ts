@@ -1,6 +1,7 @@
 import { chmod } from 'node:fs/promises';
 import * as vscode from 'vscode';
 import { ConfigLoader } from '../config/configLoader';
+import type { Telemetry } from '../telemetry/telemetry';
 import { listPresets, planHooks } from '../core/hookPresets';
 import type { HookManager, PackageManager, PlannedFile, ProjectInfo } from '../core/hookPresets';
 
@@ -139,6 +140,7 @@ async function writeFiles(root: vscode.Uri, files: PlannedFile[]): Promise<void>
 export async function installHooks(
   configLoader: ConfigLoader,
   proposed: ProposedContentProvider,
+  telemetry: Pick<Telemetry, 'track'>,
 ): Promise<void> {
   const folder = vscode.workspace.workspaceFolders?.[0];
   if (!folder) {
@@ -200,6 +202,10 @@ export async function installHooks(
   }
 
   await writeFiles(root, plan.files);
+  telemetry.track('hooksInstalled', {
+    manager: manager.value,
+    presets: picked.map((item) => item.id).join(','),
+  });
 
   const action = await vscode.window.showInformationMessage(
     `Wrote ${plan.files.map((file) => file.path).join(', ')}. Install the dependencies to activate the hooks.`,
@@ -214,12 +220,15 @@ export async function installHooks(
 }
 
 /** Registers the "Install Git hooks" command and its diff content provider. */
-export function registerInstallHooks(configLoader: ConfigLoader): vscode.Disposable {
+export function registerInstallHooks(
+  configLoader: ConfigLoader,
+  telemetry: Pick<Telemetry, 'track'>,
+): vscode.Disposable {
   const proposed = new ProposedContentProvider();
   return vscode.Disposable.from(
     vscode.workspace.registerTextDocumentContentProvider(PROPOSED_SCHEME, proposed),
     vscode.commands.registerCommand(INSTALL_HOOKS_COMMAND, () =>
-      installHooks(configLoader, proposed),
+      installHooks(configLoader, proposed, telemetry),
     ),
   );
 }

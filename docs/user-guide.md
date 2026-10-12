@@ -386,6 +386,30 @@ regenerate it.
   packages, and run `git config --unset core.hooksPath` for husky (`npx lefthook uninstall` for
   lefthook).
 
+## Telemetry
+
+Commit Wizard can report **anonymous usage counts**, and only if you allow it: VS Code's own
+telemetry setting (`telemetry.telemetryLevel`) is honored, and with telemetry off nothing is
+recorded or sent. No identifier of any kind is attached (VS Code's machine and session ids are
+dropped).
+
+Exactly three events exist, each with a handful of yes/no or short-token properties:
+
+| Event | Properties |
+| --- | --- |
+| `commit` | `typeKind` (`builtin` or `custom` type), `amend`, `push`, `aiDraft` (booleans) |
+| `hooksInstalled` | `manager` (`husky` or `lefthook`), `presets` (ids of the checks chosen) |
+| `command` | `name` (`new-branch`, `generate-pr`, `new-issue`, `install-hooks`, `history-reword`) |
+
+Never included: commit messages, branch names, file paths, repository or user names, or any free
+text. The code enforces this with a whitelist (`src/core/telemetryEvents.ts`): unknown events are
+dropped, and so are properties that are not booleans, small numbers or short lowercase tokens.
+
+Every event is written to the **Commit Wizard Telemetry** output channel so you can see what is
+reported. Events are posted to a collector **only** if you set `gitmojiCommit.telemetry.endpoint`
+(an `https://` URL, application-level setting) — by default it is empty and nothing leaves your
+machine.
+
 ## Configuration reference
 
 | Setting | Default | Description |
@@ -401,6 +425,7 @@ regenerate it.
 | `gitmojiCommit.emojiPosition` | `"before"` | Emoji before the type, or `"after"` the colon (Release Please needs the type first). |
 | `gitmojiCommit.history.count` | `50` | Commits listed in the Commit History view (1-500). |
 | `gitmojiCommit.history.merges` | `"ignore"` | `"ignore"` merge commits in the history, or `"flag"` them. |
+| `gitmojiCommit.telemetry.endpoint` | `""` | HTTPS collector for usage events; empty sends nothing (see [Telemetry](#telemetry)). |
 | `gitmojiCommit.issuePattern` | `""` | Regex to detect the issue in the branch name; empty uses the built-in detection. |
 | `gitmojiCommit.titleWarningLength` | `50` | Title length that triggers the amber warning. |
 | `gitmojiCommit.titleMaxLength` | `72` | Title length that triggers the red warning. |

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { ConfigLoader } from '../config/configLoader';
+import type { Telemetry } from '../telemetry/telemetry';
 import { DEFAULT_BRANCH_PATTERN, branchNameProblem, renderBranchName } from '../core/branchName';
 import { extractIssueFromBranch } from '../core/branchIssueExtractor';
 import { resolveTracker } from '../core/issueTracker';
@@ -102,8 +103,12 @@ export async function createConformingBranch(
 }
 
 /** Registers the "New Branch" command. */
-export function registerNewBranch(configLoader: ConfigLoader): vscode.Disposable {
-  return vscode.commands.registerCommand(NEW_BRANCH_COMMAND, () =>
-    createConformingBranch(configLoader),
-  );
+export function registerNewBranch(
+  configLoader: ConfigLoader,
+  telemetry: Pick<Telemetry, 'track'>,
+): vscode.Disposable {
+  return vscode.commands.registerCommand(NEW_BRANCH_COMMAND, () => {
+    telemetry.track('command', { name: 'new-branch' });
+    return createConformingBranch(configLoader);
+  });
 }

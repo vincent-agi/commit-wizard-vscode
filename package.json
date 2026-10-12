@@ -280,6 +280,12 @@
           "scope": "window",
           "description": "Merge commits in the Commit History view: ignore them, or list them with a merge icon."
         },
+        "gitmojiCommit.telemetry.endpoint": {
+          "type": "string",
+          "default": "",
+          "scope": "application",
+          "markdownDescription": "HTTPS URL receiving anonymous usage events as JSON. Empty (default): events are only written to the *Commit Wizard Telemetry* output channel and nothing is sent. Nothing is reported at all when VS Code telemetry is turned off (`telemetry.telemetryLevel`)."
+        },
         "gitmojiCommit.titleWarningLength": {
           "type": "number",
           "default": 50,

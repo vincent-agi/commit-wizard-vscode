@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { ConfigLoader } from '../config/configLoader';
+import type { Telemetry } from '../telemetry/telemetry';
 import { checkCommitConformity } from '../core/conformity';
 import type { Conformity } from '../core/conformity';
 import { isHeadPushed } from '../core/pushDecision';
@@ -164,6 +165,7 @@ async function rewordCommit(entry: HistoryEntry, beginAmend: () => Promise<void>
 export function registerHistory(
   configLoader: ConfigLoader,
   beginAmend: () => Promise<void>,
+  telemetry: Pick<Telemetry, 'track'>,
 ): vscode.Disposable {
   const provider = new HistoryProvider(configLoader);
   const treeView = vscode.window.createTreeView(HISTORY_VIEW_ID, { treeDataProvider: provider });
@@ -181,9 +183,10 @@ export function registerHistory(
       provider.setFilter(false),
     ),
     vscode.commands.registerCommand('gitmojiCommit.history.show', showCommit),
-    vscode.commands.registerCommand('gitmojiCommit.history.reword', (entry: HistoryEntry) =>
-      rewordCommit(entry, beginAmend),
-    ),
+    vscode.commands.registerCommand('gitmojiCommit.history.reword', (entry: HistoryEntry) => {
+      telemetry.track('command', { name: 'history-reword' });
+      return rewordCommit(entry, beginAmend);
+    }),
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration(`${SETTINGS}.history`)) refresh();
     }),

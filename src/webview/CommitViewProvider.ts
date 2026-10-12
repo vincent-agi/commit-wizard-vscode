@@ -13,6 +13,8 @@ import type { Scope } from '../core/types';
 import type { CommitFormInput } from '../core/types';
 import type { CommitConfig } from '../core/commitConfig';
 import { ConfigLoader } from '../config/configLoader';
+import { DEFAULT_CONFIG } from '../core/commitConfig';
+import type { Telemetry } from '../telemetry/telemetry';
 import { createConformingBranch } from '../branch/newBranch';
 import { GitHubError, createGitHubClient } from '../github/githubClient';
 import {
@@ -61,6 +63,8 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
   private readonly issueTitles = new Map<number, string>();
   private readonly readyWebviews = new Set<vscode.Webview>();
   private pendingAmend = false;
+  /** Whether the message being committed started from an AI draft. */
+  private aiDrafted = false;
   private lastBranch: string | undefined;
   private pendingDraft: { key: string; input: CommitFormInput } | undefined;
   private draftTimer: NodeJS.Timeout | undefined;
@@ -69,6 +73,7 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
     private readonly extensionUri: vscode.Uri,
     private readonly configLoader: ConfigLoader,
     private readonly workspaceState: vscode.Memento,
+    private readonly telemetry: Pick<Telemetry, 'track'>,
   ) {
     configLoader.onDidChange(() => void this.broadcastConfig());
   }
@@ -423,6 +428,15 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
       return;
     }
 
+    this.telemetry.track('commit', {
+      typeKind: DEFAULT_CONFIG.types.some((type) => type.name === input.type)
+        ? 'builtin'
+        : 'custom',
+      amend,
+      push,
+      aiDraft: this.aiDrafted,
+    });
+    this.aiDrafted = false;
     await this.discardDraft();
     this.postMessage(webview, {
       type: 'commitSucceeded',
@@ -545,6 +559,7 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
         types: config.types.map((type) => type.name),
         scopes: config.scopes.map((scope) => scope.name),
       });
+      this.aiDrafted = this.aiDrafted || parsed.ok;
       this.postMessage(
         webview,
         parsed.ok

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { ConfigLoader } from '../config/configLoader';
+import type { Telemetry } from '../telemetry/telemetry';
 import { buildPrDescription, splitPrDocument } from '../core/prDescription';
 import {
   getActiveRepository,
@@ -119,8 +120,12 @@ async function generatePullRequest(configLoader: ConfigLoader): Promise<void> {
 }
 
 /** Registers the "Generate Pull Request Description" command. */
-export function registerGeneratePullRequest(configLoader: ConfigLoader): vscode.Disposable {
-  return vscode.commands.registerCommand(GENERATE_PR_COMMAND, () =>
-    generatePullRequest(configLoader),
-  );
+export function registerGeneratePullRequest(
+  configLoader: ConfigLoader,
+  telemetry: Pick<Telemetry, 'track'>,
+): vscode.Disposable {
+  return vscode.commands.registerCommand(GENERATE_PR_COMMAND, () => {
+    telemetry.track('command', { name: 'generate-pr' });
+    return generatePullRequest(configLoader);
+  });
 }
