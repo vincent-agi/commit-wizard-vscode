@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { COMMIT_TYPE_DESCRIPTIONS, ISSUE_KEYWORD_DESCRIPTIONS, ISSUE_KEYWORD_LABELS } from './types';
-import type { CommitType, IssueKeyword } from './types';
+import {
+  COMMIT_TYPE_DESCRIPTIONS,
+  ISSUE_KEYWORD_DESCRIPTIONS,
+  ISSUE_KEYWORD_LABELS,
+} from './types';
+import type { DefaultCommitType, IssueKeyword } from './types';
 
-const ALL_TYPES: CommitType[] = [
+const ALL_TYPES: DefaultCommitType[] = [
   'feat',
   'fix',
   'docs',

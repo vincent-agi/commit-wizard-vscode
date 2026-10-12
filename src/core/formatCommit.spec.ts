@@ -84,6 +84,18 @@ describe('formatCommitMessage', () => {
     );
   });
 
+  it('omits the emoji prefix entirely when gitmoji is empty', () => {
+    expect(formatCommitMessage({ ...base, gitmoji: '', scope: 'api' })).toBe(
+      'feat(api): add live preview',
+    );
+  });
+
+  it('accepts a custom, non-default type', () => {
+    expect(formatCommitMessage({ ...base, type: 'deps', gitmoji: '' })).toBe(
+      'deps: add live preview',
+    );
+  });
+
   it('appends the body as its own blank-line-separated paragraph', () => {
     expect(formatCommitMessage({ ...base, body: 'Some detailed explanation.' })).toBe(
       '✨ feat: add live preview\n\nSome detailed explanation.',

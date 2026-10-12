@@ -30,8 +30,8 @@ function formatIssueLine(keyword: IssueKeyword, issue: string): string {
 }
 
 /**
- * Builds a Conventional Commits message, prefixed with the gitmoji selected in
- * `input.gitmoji`, from a {@link CommitFormInput}.
+ * Builds a Conventional Commits message, prefixed with the gitmoji in `input.gitmoji` (no
+ * prefix when it is empty), from a {@link CommitFormInput}.
  *
  * Layout: title, then an optional body paragraph, then an optional footer block. Paragraphs are
  * separated by one blank line; footer lines are consecutive (Git trailer format), in the order
@@ -51,7 +51,8 @@ export function formatCommitMessage(input: CommitFormInput): string {
 
   const scopePart = scope ? `(${scope})` : '';
   const breakingMark = input.breakingChange ? '!' : '';
-  const title = `${input.gitmoji} ${input.type}${scopePart}${breakingMark}: ${input.description}`;
+  const emojiPrefix = input.gitmoji ? `${input.gitmoji} ` : '';
+  const title = `${emojiPrefix}${input.type}${scopePart}${breakingMark}: ${input.description}`;
 
   const footers: string[] = [];
 

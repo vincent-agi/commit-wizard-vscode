@@ -11,9 +11,26 @@ const KEYWORD_NUMBER = /\b(?:issue|bug|gh|fix)-?(\d+)\b/i;
  * itself one of those keywords (e.g. `GH-789`) is treated as a keyword match, not Jira.
  *
  * @param branchName - The current branch name (e.g. `feature/123-login`).
+ * @param issuePattern - Optional custom regular expression source. When it matches, its first
+ * capture group (or the whole match when it has none) is returned instead of the built-in
+ * heuristics. An invalid pattern is ignored.
  * @returns The normalized issue token (`123` or `#123`), or `undefined` when none is found.
  */
-export function extractIssueFromBranch(branchName: string): string | undefined {
+export function extractIssueFromBranch(
+  branchName: string,
+  issuePattern?: string,
+): string | undefined {
+  if (issuePattern) {
+    try {
+      const custom = branchName.match(new RegExp(issuePattern));
+      if (custom) {
+        return custom[1] ?? custom[0];
+      }
+    } catch {
+      // Invalid user-provided pattern: fall through to the built-in heuristics.
+    }
+  }
+
   const jiraMatch = branchName.match(JIRA_STYLE);
   if (jiraMatch) {
     return jiraMatch[1];

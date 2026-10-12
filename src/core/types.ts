@@ -1,5 +1,5 @@
-/** One of the ten supported Conventional Commit types. */
-export type CommitType =
+/** One of the ten built-in Conventional Commit types. */
+export type DefaultCommitType =
   | 'feat'
   | 'fix'
   | 'docs'
@@ -11,11 +11,14 @@ export type CommitType =
   | 'build'
   | 'ci';
 
+/** A commit type name. Any string, since teams can define their own types. */
+export type CommitType = string;
+
 /**
- * Short, one-line explanation of each {@link CommitType}, shown next to the type in the
+ * Short, one-line explanation of each {@link DefaultCommitType}, shown next to the type in the
  * dropdown to help pick the right one.
  */
-export const COMMIT_TYPE_DESCRIPTIONS: Record<CommitType, string> = {
+export const COMMIT_TYPE_DESCRIPTIONS: Record<DefaultCommitType, string> = {
   feat: 'A new feature',
   fix: 'A bug fix',
   docs: 'Documentation only changes',
@@ -62,7 +65,10 @@ export const ISSUE_KEYWORD_DESCRIPTIONS: Record<IssueKeyword, string> = {
 /** All fields collected from the commit builder form. */
 export interface CommitFormInput {
   type: CommitType;
-  /** The gitmoji glyph to prefix the message with, picked from the Gitmoji dropdown. */
+  /**
+   * The gitmoji glyph to prefix the message with, picked from the Gitmoji dropdown. Empty when
+   * emojis are disabled: the message then has no emoji prefix.
+   */
   gitmoji: string;
   scope?: string;
   /** One or more issue references, separated by spaces or commas (e.g. `123, PROJ-45`). */
