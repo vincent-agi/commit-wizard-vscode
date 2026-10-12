@@ -15,6 +15,12 @@ import type { CommitFailure } from '../core/commitError';
 import { restoreControls, snapshotControls } from './persist';
 import type { PersistedControl } from './persist';
 import type { HostToWebviewMessage, RepositoryState, WebviewToHostMessage } from './messages';
+import { setLocale, t } from '../i18n';
+import type { MessageKey } from '../i18n';
+import { localizedTypeDescription } from '../core/typeDescription';
+
+// The host writes the display language into <html lang>.
+setLocale(document.documentElement.lang);
 
 declare function acquireVsCodeApi(): {
   postMessage(message: WebviewToHostMessage): void;
@@ -142,14 +148,17 @@ function applyInput(input: CommitFormInput): void {
 }
 
 /** Spoken form of the one-letter status, so a screen reader does not read "M" or "U". */
-const STATUS_WORDS: Record<string, string> = {
-  M: 'modified',
-  A: 'added',
-  D: 'deleted',
-  R: 'renamed',
-  C: 'copied',
-  U: 'untracked',
-};
+function statusWord(status: string): string {
+  const known: Record<string, MessageKey> = {
+    M: 'status.M',
+    A: 'status.A',
+    D: 'status.D',
+    R: 'status.R',
+    C: 'status.C',
+    U: 'status.U',
+  };
+  return t(known[status] ?? 'status.other');
+}
 
 function renderFileList(list: HTMLUListElement, files: ChangedFile[], staged: boolean): void {
   list.textContent = '';
@@ -159,7 +168,7 @@ function renderFileList(list: HTMLUListElement, files: ChangedFile[], staged: bo
     const box = document.createElement('input');
     box.type = 'checkbox';
     box.checked = staged;
-    box.setAttribute('aria-label', `${STATUS_WORDS[file.status] ?? 'changed'} ${file.path}`);
+    box.setAttribute('aria-label', `${statusWord(file.status)} ${file.path}`);
     box.addEventListener('change', () =>
       vscode.postMessage({ type: box.checked ? 'stage' : 'unstage', paths: [file.path] }),
     );
@@ -175,7 +184,7 @@ function renderFileList(list: HTMLUListElement, files: ChangedFile[], staged: bo
 function renderChanges(): void {
   renderFileList(stagedList, changes.staged, true);
   renderFileList(unstagedList, changes.unstaged, false);
-  changesCount.textContent = `(${changes.staged.length} staged, ${changes.unstaged.length} not staged)`;
+  changesCount.textContent = t('ui.changesCount', changes.staged.length, changes.unstaged.length);
   stageAllButton.disabled = changes.unstaged.length === 0;
   unstageAllButton.disabled = changes.staged.length === 0;
   $('stagedTitle').hidden = changes.staged.length === 0;
@@ -199,21 +208,21 @@ function renderSuggestion(): void {
   suggestionRow.classList.toggle('visible', differs);
   if (differs && suggestion) {
     const parts = [suggestion.type, suggestion.scope ? `(${suggestion.scope})` : ''];
-    suggestionText.textContent = `Suggested: ${parts.join('')}`;
-    applySuggestionButton.setAttribute('aria-label', `Apply suggestion ${parts.join('')}`);
+    suggestionText.textContent = t('ui.suggested', parts.join(''));
+    applySuggestionButton.setAttribute('aria-label', t('ui.applySuggestion', parts.join('')));
   }
 }
 
 function renderActions(): void {
   const amend = amendCheckbox.checked;
   const nothingStaged = !amend && changes.staged.length === 0;
-  commitNowButton.textContent = amend ? 'Amend commit' : 'Commit now';
+  commitNowButton.textContent = amend ? t('ui.amendCommit') : t('ui.commitNow');
   commitNowButton.disabled = committing || nothingStaged;
   commitPushButton.disabled = committing || nothingStaged;
   commitPushButton.hidden = false;
   aiDraftButton.hidden = !config.aiDraft;
   aiDraftButton.disabled = drafting || changes.staged.length === 0;
-  changesHint.textContent = nothingStaged ? 'Stage some changes to commit them.' : '';
+  changesHint.textContent = nothingStaged ? t('ui.stageHint') : '';
 }
 
 function renderIssueLinks(): void {
@@ -250,12 +259,10 @@ function scheduleIssueLookup(): void {
 }
 
 function renderBranch(): void {
-  branchLabel.textContent = branch ? `Branch: ${branch}` : 'No branch';
+  branchLabel.textContent = branch ? t('ui.branch', branch) : t('ui.noBranch');
   const protectedNow = isProtectedBranch(branch, config.protectedBranches);
   protectedBanner.classList.toggle('visible', protectedNow);
-  protectedBanner.textContent = protectedNow
-    ? `You are on the protected branch "${branch}". Committing here asks for confirmation.`
-    : '';
+  protectedBanner.textContent = protectedNow ? t('ui.protectedBanner', branch ?? '') : '';
 }
 
 function renderRecent(): void {
@@ -278,7 +285,7 @@ function render(): void {
     config.titleWarningLength,
     config.titleMaxLength,
   );
-  charCounter.textContent = `${length} characters`;
+  charCounter.textContent = t('ui.characters', length);
   charCounter.classList.toggle('warn', status === 'warn');
   charCounter.classList.toggle('over', status === 'over');
 
@@ -286,7 +293,7 @@ function render(): void {
 
   const { invalid } = parseCoAuthors(coAuthorsTextarea.value);
   coAuthorsError.textContent =
-    invalid.length > 0 ? `Ignored (expected "Name <email>"): ${invalid.join('; ')}` : '';
+    invalid.length > 0 ? t('ui.coAuthorsIgnored', invalid.join('; ')) : '';
 
   previewBox.textContent = input.description ? formatCommitMessage(input) : '';
 
@@ -306,8 +313,9 @@ function setTypes(types: CommitConfig['types']): void {
   for (const type of types) {
     const option = document.createElement('option');
     option.value = type.name;
-    option.title = type.description;
-    option.textContent = type.description ? `${type.name} — ${type.description}` : type.name;
+    const description = localizedTypeDescription(type.name, type.description);
+    option.title = description;
+    option.textContent = description ? `${type.name} — ${description}` : type.name;
     typeSelect.appendChild(option);
   }
   if (types.some((type) => type.name === previouslySelected)) {
@@ -317,13 +325,17 @@ function setTypes(types: CommitConfig['types']): void {
 
 /** Selects `emoji` in the Gitmoji dropdown, adding it as a custom entry when absent. */
 function selectGitmoji(emoji: string): void {
-  ensureOption(gitmojiSelect, emoji, `${emoji} custom`);
+  ensureOption(gitmojiSelect, emoji, t('ui.customEmoji', emoji));
   gitmojiSelect.value = emoji;
 }
 
 function setScopes(scopes: Scope[]): void {
   const previouslySelected = scopeSelect.value;
-  scopeSelect.innerHTML = '<option value="">(none)</option>';
+  scopeSelect.innerHTML = '';
+  const none = document.createElement('option');
+  none.value = '';
+  none.textContent = t('ui.none');
+  scopeSelect.appendChild(none);
   for (const scope of scopes) {
     const option = document.createElement('option');
     option.value = scope.name;
@@ -385,7 +397,7 @@ function hideCommitError(): void {
 
 function setCommitting(value: boolean): void {
   committing = value;
-  commitStatus.textContent = value ? 'Committing… Git hooks may take a moment.' : '';
+  commitStatus.textContent = value ? t('ui.committing') : '';
   renderActions();
 }
 
@@ -498,7 +510,7 @@ clearFormButton.addEventListener('click', () => {
 
 aiDraftButton.addEventListener('click', () => {
   drafting = true;
-  commitStatus.textContent = 'Waiting for the language model…';
+  commitStatus.textContent = t('ui.waitingModel');
   hideCommitError();
   renderActions();
   vscode.postMessage({ type: 'draftWithAi' });

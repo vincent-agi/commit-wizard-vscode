@@ -9,6 +9,7 @@ import { registerInstallHooks } from './hooks/installHooks';
 import { IssueFormPanel, NEW_ISSUE_COMMAND } from './issueForm/IssueFormPanel';
 import { Telemetry } from './telemetry/telemetry';
 import { CommitViewProvider } from './webview/CommitViewProvider';
+import { setLocale } from './i18n';
 
 /**
  * Extension entry point. Registers the "Commit Builder" sidebar {@link CommitViewProvider}.
@@ -16,6 +17,9 @@ import { CommitViewProvider } from './webview/CommitViewProvider';
  * @param context - The extension's activation context, used to scope subscriptions.
  */
 export function activate(context: vscode.ExtensionContext): void {
+  // Before anything creates a view or a message: the language is fixed for the session.
+  setLocale(vscode.env.language);
+
   const telemetry = new Telemetry(String(context.extension.packageJSON.version));
   const configLoader = new ConfigLoader();
   const provider = new CommitViewProvider(

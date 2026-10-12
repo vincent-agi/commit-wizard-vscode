@@ -9,6 +9,11 @@ import type { IssueFormInput, MilestoneFormInput } from '../core/issueTemplate';
 import { restoreControls, snapshotControls } from '../webview/persist';
 import type { PersistedControl } from '../webview/persist';
 import type { HostToIssueFormMessage, IssueFormToHostMessage } from './messages';
+import { setLocale, t } from '../i18n';
+import { localizedTypeDescription } from '../core/typeDescription';
+
+// The host writes the display language into <html lang>.
+setLocale(document.documentElement.lang);
 
 declare function acquireVsCodeApi(): {
   postMessage(message: IssueFormToHostMessage): void;
@@ -105,7 +110,9 @@ function render(): void {
   vscode.setState(snapshotControls(persistedControls));
   issueFields.classList.toggle('hidden', !isIssueMode());
   milestoneFields.classList.toggle('hidden', isIssueMode());
-  submitButton.textContent = isIssueMode() ? 'Create issue' : 'Create milestone';
+  submitButton.textContent = isIssueMode()
+    ? t('issueForm.createIssue')
+    : t('issueForm.createMilestone');
   submitButton.disabled = busy;
 
   if (isIssueMode()) {
@@ -118,7 +125,7 @@ function render(): void {
     previewBox.textContent = payload.title
       ? [
           payload.title,
-          payload.due_on ? `Due ${payload.due_on.slice(0, 10)}` : '',
+          payload.due_on ? t('issueForm.dueLine', payload.due_on.slice(0, 10)) : '',
           payload.description ?? '',
         ]
           .filter(Boolean)
@@ -237,7 +244,11 @@ window.addEventListener('message', (event: MessageEvent<HostToIssueFormMessage>)
       issueTemplate = message.config.issueTemplate;
       fillSelect(
         typeSelect,
-        message.config.types.map((t) => ({ value: t.name, text: t.name, title: t.description })),
+        message.config.types.map((type) => ({
+          value: type.name,
+          text: type.name,
+          title: localizedTypeDescription(type.name, type.description),
+        })),
         false,
       );
       fillSelect(
@@ -247,10 +258,9 @@ window.addEventListener('message', (event: MessageEvent<HostToIssueFormMessage>)
       );
       restoreControls(persistedControls, savedState);
       repoLabel.textContent = message.repo
-        ? `Repository: ${message.repo}`
-        : 'No GitHub remote found in this workspace.';
-      if (!message.repo)
-        showBanner('Open a folder whose Git repository has a github.com remote.', 'error');
+        ? t('issueForm.repository', message.repo)
+        : t('issueForm.noRemoteShort');
+      if (!message.repo) showBanner(t('issueForm.openFolder'), 'error');
       render();
       break;
     case 'meta':
@@ -266,13 +276,17 @@ window.addEventListener('message', (event: MessageEvent<HostToIssueFormMessage>)
       break;
     case 'busy':
       busy = true;
-      showBanner('Contacting GitHub…');
+      showBanner(t('issueForm.contacting'));
       render();
       break;
     case 'created': {
       busy = false;
       banner.className = 'success';
-      banner.textContent = `Created ${message.kind} #${message.number}: `;
+      banner.textContent = t(
+        'issueForm.created',
+        t(message.kind === 'issue' ? 'issueForm.kind.issue' : 'issueForm.kind.milestone'),
+        message.number,
+      );
       const link = document.createElement('a');
       link.href = '#';
       link.dataset.url = message.url;

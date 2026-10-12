@@ -14,6 +14,7 @@ import { getGitHubRepository } from '../git/gitExtension';
 import { GitHubError, createGitHubClient } from '../github/githubClient';
 import { generateIssueFormHtml } from './html';
 import type { HostToIssueFormMessage, IssueFormToHostMessage } from './messages';
+import { t } from '../i18n';
 
 export const NEW_ISSUE_COMMAND = 'gitmojiCommit.newIssue';
 
@@ -39,7 +40,7 @@ export class IssueFormPanel {
   ) {
     this.panel = vscode.window.createWebviewPanel(
       'gitmojiCommit.issueForm',
-      'New Issue or Milestone',
+      t('issueForm.title'),
       vscode.ViewColumn.Beside,
       {
         enableScripts: true,
@@ -152,7 +153,7 @@ export class IssueFormPanel {
   private describe(error: unknown): string {
     return error instanceof GitHubError
       ? error.message
-      : `Unexpected error: ${error instanceof Error ? error.message : String(error)}`;
+      : t('github.unexpected', error instanceof Error ? error.message : String(error));
   }
 
   /** Common guard for both submit paths: a repo, a valid form, and a GitHub session. */
@@ -160,8 +161,7 @@ export class IssueFormPanel {
     if (!this.repo) {
       this.post({
         type: 'failed',
-        message:
-          'No GitHub remote found. Open a folder whose Git repository has a github.com remote.',
+        message: t('issueForm.noRemote'),
       });
       return undefined;
     }
@@ -171,7 +171,7 @@ export class IssueFormPanel {
     }
     const session = await this.session(true);
     if (!session) {
-      this.post({ type: 'failed', message: 'GitHub sign-in is required to create it.' });
+      this.post({ type: 'failed', message: t('issueForm.signInRequired') });
       return undefined;
     }
     return createGitHubClient(session.accessToken, this.repo);

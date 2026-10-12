@@ -9,6 +9,7 @@ import {
   getGitHubRepository,
 } from '../git/gitExtension';
 import { GitHubError, createGitHubClient } from '../github/githubClient';
+import { t } from '../i18n';
 
 export const GENERATE_PR_COMMAND = 'gitmojiCommit.generatePullRequest';
 
@@ -23,15 +24,13 @@ async function generatePullRequest(configLoader: ConfigLoader): Promise<void> {
   const repo = getActiveRepository();
   const branch = repo?.state.HEAD?.name;
   if (!repo || !branch) {
-    vscode.window.showWarningMessage('Check out a branch of a Git repository first.');
+    vscode.window.showWarningMessage(t('pr.needBranch'));
     return;
   }
 
   const base = await getDefaultBaseBranch(repo);
   if (!base) {
-    vscode.window.showWarningMessage(
-      'Could not find the base branch (origin/HEAD, main or master) to compare with.',
-    );
+    vscode.window.showWarningMessage(t('pr.noBase'));
     return;
   }
 
@@ -40,16 +39,14 @@ async function generatePullRequest(configLoader: ConfigLoader): Promise<void> {
     commits = await getBranchCommits(repo, base.ref);
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
-    vscode.window.showErrorMessage(`Could not read the branch commits: ${reason}`);
+    vscode.window.showErrorMessage(t('pr.readFailed', reason));
     return;
   }
 
   const { config } = await configLoader.load();
   const description = buildPrDescription(commits, { branch, template: config.prTemplate });
   if (!description) {
-    vscode.window.showInformationMessage(
-      `"${branch}" has no commits ahead of ${base.ref}: there is nothing to describe.`,
-    );
+    vscode.window.showInformationMessage(t('pr.none', branch, base.ref));
     return;
   }
 
@@ -60,34 +57,32 @@ async function generatePullRequest(configLoader: ConfigLoader): Promise<void> {
   await vscode.window.showTextDocument(document, { preview: false });
 
   const choice = await vscode.window.showInformationMessage(
-    `Pull request description for ${branch} -> ${base.name} (${commits.length} commit(s)). Edit it, then choose an action.`,
-    'Create pull request',
-    'Copy to clipboard',
+    t('pr.review', branch, base.name, commits.length),
+    t('pr.create'),
+    t('pr.copy'),
   );
   const edited = splitPrDocument(document.getText());
 
-  if (choice === 'Copy to clipboard') {
+  if (choice === t('pr.copy')) {
     await vscode.env.clipboard.writeText(`${edited.title}\n\n${edited.body}`);
-    vscode.window.showInformationMessage('Pull request description copied.');
+    vscode.window.showInformationMessage(t('pr.copied'));
     return;
   }
-  if (choice !== 'Create pull request') {
+  if (choice !== t('pr.create')) {
     return;
   }
 
   const github = getGitHubRepository();
   if (!github) {
-    vscode.window.showErrorMessage('This repository has no github.com remote.');
+    vscode.window.showErrorMessage(t('pr.noRemote'));
     return;
   }
   if (!edited.title) {
-    vscode.window.showErrorMessage('The pull request needs a title (the first line).');
+    vscode.window.showErrorMessage(t('pr.needTitle'));
     return;
   }
   if (!repo.state.HEAD?.upstream) {
-    vscode.window.showWarningMessage(
-      `"${branch}" is not pushed yet. Push it first (for example with Commit & Push), then try again.`,
-    );
+    vscode.window.showWarningMessage(t('pr.notPushed', branch));
     return;
   }
 
@@ -102,8 +97,8 @@ async function generatePullRequest(configLoader: ConfigLoader): Promise<void> {
       base: base.name,
     });
     const open = await vscode.window.showInformationMessage(
-      `Created pull request #${created.number}.`,
-      'Open',
+      t('pr.created', created.number),
+      t('pr.open'),
     );
     if (open) {
       await vscode.env.openExternal(vscode.Uri.parse(created.url));
@@ -115,7 +110,7 @@ async function generatePullRequest(configLoader: ConfigLoader): Promise<void> {
         : error instanceof Error
           ? error.message
           : String(error);
-    vscode.window.showErrorMessage(`Could not create the pull request: ${reason}`);
+    vscode.window.showErrorMessage(t('pr.createFailed', reason));
   }
 }
 

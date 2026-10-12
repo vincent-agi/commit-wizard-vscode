@@ -33,6 +33,7 @@ import {
 import type { GitRepository } from '../git/gitExtension';
 import { generateHtml } from './html';
 import type { HostToWebviewMessage, RepositoryState, WebviewToHostMessage } from './messages';
+import { t } from '../i18n';
 
 const CONFIGURATION_SECTION = 'gitmojiCommit';
 const RECENT_MESSAGES = 10;
@@ -190,7 +191,7 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
       await action(repo);
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
-      vscode.window.showErrorMessage(`Git operation failed: ${reason}`);
+      vscode.window.showErrorMessage(t('cb.gitFailed', reason));
     }
   }
 
@@ -297,14 +298,14 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
 
   private async addScope(): Promise<void> {
     if (!vscode.workspace.workspaceFolders?.length) {
-      vscode.window.showWarningMessage('Open a workspace folder to add and persist a new scope.');
+      vscode.window.showWarningMessage(t('cb.scope.needFolder'));
       return;
     }
 
     const name = await vscode.window.showInputBox({
-      prompt: 'New scope name',
-      placeHolder: 'e.g. webview',
-      validateInput: (value) => (value.trim() ? undefined : 'Scope name is required.'),
+      prompt: t('cb.scope.namePrompt'),
+      placeHolder: t('cb.scope.namePlaceholder'),
+      validateInput: (value) => (value.trim() ? undefined : t('cb.scope.nameRequired')),
     });
 
     if (!name) {
@@ -312,9 +313,9 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
     }
 
     const description = await vscode.window.showInputBox({
-      prompt: `Short description for scope "${name}"`,
-      placeHolder: 'e.g. Webview UI and client script',
-      validateInput: (value) => (value.trim() ? undefined : 'Description is required.'),
+      prompt: t('cb.scope.descriptionPrompt', name),
+      placeHolder: t('cb.scope.descriptionPlaceholder'),
+      validateInput: (value) => (value.trim() ? undefined : t('cb.scope.descriptionRequired')),
     });
 
     if (!description) {
@@ -341,7 +342,7 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
     }
     const message = await getLastCommitMessage(repo);
     if (!message) {
-      this.fail(webview, 'There is no commit to amend yet.');
+      this.fail(webview, t('cb.amend.none'));
       return;
     }
 
@@ -380,10 +381,7 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
   ): Promise<void> {
     const repo = getActiveRepository();
     if (!repo) {
-      this.fail(
-        webview,
-        'No active Git repository found. Open a folder with a Git repository to commit.',
-      );
+      this.fail(webview, t('cb.noRepo'));
       return;
     }
 
@@ -392,28 +390,28 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
 
     if (isProtectedBranch(head.name, config.protectedBranches)) {
       const choice = await vscode.window.showWarningMessage(
-        `"${head.name}" is a protected branch. Commit directly to it?`,
+        t('cb.protected.ask', head.name ?? ''),
         { modal: true },
-        'Commit anyway',
-        'Create a branch',
+        t('cb.protected.commit'),
+        t('cb.protected.branch'),
       );
-      if (choice === 'Create a branch') {
+      if (choice === t('cb.protected.branch')) {
         // Carry on with the commit on the new branch only if one was actually created.
         if (!(await createConformingBranch(this.configLoader))) {
           return;
         }
-      } else if (choice !== 'Commit anyway') {
+      } else if (choice !== t('cb.protected.commit')) {
         return;
       }
     }
 
     if (amend && isHeadPushed(head)) {
       const choice = await vscode.window.showWarningMessage(
-        'The last commit is already on the remote. Amending it rewrites shared history and a later push would need a force-push.',
+        t('cb.amend.pushed'),
         { modal: true },
-        'Amend anyway',
+        t('cb.amend.anyway'),
       );
-      if (choice !== 'Amend anyway') {
+      if (choice !== t('cb.amend.anyway')) {
         return;
       }
     }
@@ -454,7 +452,7 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
       repo.state.remotes.map((remote) => remote.name),
     );
     if (!plan.ok) {
-      this.fail(webview, `Committed, but not pushed: ${plan.reason}`);
+      this.fail(webview, t('cb.push.skipped', plan.reason));
       return;
     }
 
@@ -462,7 +460,7 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
       await pushWithPlan(repo, plan);
     } catch (error) {
       const failure = describeCommitError(error);
-      this.fail(webview, `Committed, but the push failed: ${failure.summary}`, failure.details);
+      this.fail(webview, t('cb.push.failed', failure.summary), failure.details);
     }
   }
 
@@ -471,7 +469,7 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
     const { config } = await this.configLoader.load();
     const repo = getActiveRepository();
     if (!config.aiDraft || !repo) {
-      this.postMessage(webview, { type: 'aiFailed', message: 'AI drafting is not enabled.' });
+      this.postMessage(webview, { type: 'aiFailed', message: t('cb.ai.disabled') });
       return;
     }
 
@@ -479,7 +477,7 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
     if (!lm?.selectChatModels) {
       this.postMessage(webview, {
         type: 'aiFailed',
-        message: 'This version of VS Code has no language model API. Update VS Code to use this.',
+        message: t('cb.ai.noApi'),
       });
       return;
     }
@@ -488,7 +486,7 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
     if (filtered.files.length === 0) {
       this.postMessage(webview, {
         type: 'aiFailed',
-        message: 'Stage some changes first: there is nothing to describe.',
+        message: t('cb.ai.nothingStaged'),
       });
       return;
     }
@@ -497,7 +495,7 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
     if (models.length === 0) {
       this.postMessage(webview, {
         type: 'aiFailed',
-        message: 'No language model is available. Sign in to a provider such as GitHub Copilot.',
+        message: t('cb.ai.noModel'),
       });
       return;
     }
@@ -511,29 +509,34 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
                 description: candidate.vendor,
                 candidate,
               })),
-              { title: 'Language model for the commit draft' },
+              { title: t('cb.ai.pickModel') },
             )
           )?.candidate;
     if (!model) {
-      this.postMessage(webview, { type: 'aiFailed', message: 'No model selected.' });
+      this.postMessage(webview, { type: 'aiFailed', message: t('cb.ai.noneSelected') });
       return;
     }
 
     const extra = [
-      filtered.excluded.length > 0
-        ? `${filtered.excluded.length} lock/generated/binary file(s) are left out.`
-        : '',
-      filtered.truncated ? 'The diff is truncated.' : '',
+      filtered.excluded.length > 0 ? t('cb.ai.excluded', filtered.excluded.length) : '',
+      filtered.truncated ? t('cb.ai.truncated') : '',
     ]
       .filter(Boolean)
       .join(' ');
     const choice = await vscode.window.showInformationMessage(
-      `Send the staged diff (${filtered.files.length} file(s), ${filtered.text.length} characters) to ${model.name} (${model.vendor})? ${extra}`.trim(),
+      t(
+        'cb.ai.confirm',
+        filtered.files.length,
+        filtered.text.length,
+        model.name,
+        model.vendor,
+        extra,
+      ).trim(),
       { modal: true },
-      'Send',
+      t('cb.ai.send'),
     );
-    if (choice !== 'Send') {
-      this.postMessage(webview, { type: 'aiFailed', message: 'Cancelled: nothing was sent.' });
+    if (choice !== t('cb.ai.send')) {
+      this.postMessage(webview, { type: 'aiFailed', message: t('cb.ai.cancelled') });
       return;
     }
 
@@ -570,7 +573,7 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
       const reason = error instanceof Error ? error.message : String(error);
       this.postMessage(webview, {
         type: 'aiFailed',
-        message: `The model request failed: ${reason}`,
+        message: t('cb.ai.failed', reason),
       });
     } finally {
       clearTimeout(timer);

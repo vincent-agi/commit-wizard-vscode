@@ -386,6 +386,26 @@ regenerate it.
   packages, and run `git config --unset core.hooksPath` for husky (`npx lefthook uninstall` for
   lefthook).
 
+## Language
+
+The interface follows VS Code's display language: **English** and **French** are included.
+Change it with **Configure Display Language** and restart VS Code. It covers the Commit Builder and
+issue form, the history and release views, dialogs and notifications, error and configuration
+messages, command titles and setting descriptions. Anything else falls back to English, as does a
+message missing from a translation.
+
+Deliberately **not** translated, because other tools read it: the generated commit message
+(`BREAKING CHANGE:`, `Closes`, `Refs`, `Co-authored-by`), the section headings of generated issue
+and pull request bodies, the messages printed by the installed Git hooks, the prompt sent to a
+language model, and the official Gitmoji descriptions. A custom type description written in
+`.commit-wizard.json` is shown as written.
+
+**Adding a language** (for contributors): copy `package.nls.fr.json` to
+`package.nls.<lang>.json` (command titles and settings), then add `src/i18n/<lang>.ts` with the
+same keys as `src/i18n/en.ts` and register it in `src/i18n/index.ts`. `npm test` fails if a key is
+missing, a `{0}` placeholder differs from the English one, a key is unused, or a notification or
+prompt hardcodes its text.
+
 ## Keyboard and screen-reader use
 
 Everything can be done without a mouse.

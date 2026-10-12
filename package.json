@@ -1,7 +1,7 @@
 {
   "name": "commit-wizard-vscode",
-  "displayName": "Commit Wizard",
-  "description": "An interactive VS Code sidebar extension to effortlessly craft structured Conventional Commits with Gitmojis, dynamic scopes, and automated issue tracking.",
+  "displayName": "%displayName%",
+  "description": "%description%",
   "version": "0.1.0",
   "publisher": "vincent-agi",
   "license": "MIT",
@@ -19,7 +19,7 @@
       "activitybar": [
         {
           "id": "gitmojiCommit",
-          "title": "Gitmoji Commit",
+          "title": "%container.title%",
           "icon": "media/icon.svg"
         }
       ]
@@ -29,18 +29,18 @@
         {
           "type": "webview",
           "id": "gitmojiCommit.commitView",
-          "name": "Commit Builder",
+          "name": "%view.commitView.name%",
           "icon": "media/icon.svg"
         },
         {
           "id": "gitmojiCommit.history",
-          "name": "Commit History",
+          "name": "%view.history.name%",
           "icon": "media/icon.svg",
           "when": "workspaceFolderCount > 0"
         },
         {
           "id": "gitmojiCommit.release",
-          "name": "Release Preview",
+          "name": "%view.release.name%",
           "icon": "media/icon.svg",
           "when": "workspaceFolderCount > 0"
         }
@@ -93,73 +93,73 @@
     "commands": [
       {
         "command": "gitmojiCommit.focus",
-        "title": "Focus the Commit Builder",
-        "category": "Commit Wizard"
+        "title": "%command.focus.title%",
+        "category": "%category%"
       },
       {
         "command": "gitmojiCommit.history.refresh",
-        "title": "Refresh Commit History",
-        "category": "Commit Wizard",
+        "title": "%command.history.refresh.title%",
+        "category": "%category%",
         "icon": "$(refresh)"
       },
       {
         "command": "gitmojiCommit.history.filter",
-        "title": "Show Only Non-Conforming Commits",
-        "category": "Commit Wizard",
+        "title": "%command.history.filter.title%",
+        "category": "%category%",
         "icon": "$(filter)"
       },
       {
         "command": "gitmojiCommit.history.unfilter",
-        "title": "Show All Commits",
-        "category": "Commit Wizard",
+        "title": "%command.history.unfilter.title%",
+        "category": "%category%",
         "icon": "$(filter-filled)"
       },
       {
         "command": "gitmojiCommit.history.show",
-        "title": "Show Commit Details",
-        "category": "Commit Wizard"
+        "title": "%command.history.show.title%",
+        "category": "%category%"
       },
       {
         "command": "gitmojiCommit.history.reword",
-        "title": "Reword This Commit",
-        "category": "Commit Wizard",
+        "title": "%command.history.reword.title%",
+        "category": "%category%",
         "icon": "$(edit)"
       },
       {
         "command": "gitmojiCommit.release.refresh",
-        "title": "Refresh Release Preview",
-        "category": "Commit Wizard",
+        "title": "%command.release.refresh.title%",
+        "category": "%category%",
         "icon": "$(refresh)"
       },
       {
         "command": "gitmojiCommit.release.signIn",
-        "title": "Sign In to See the Release Pull Request",
-        "category": "Commit Wizard"
+        "title": "%command.release.signIn.title%",
+        "category": "%category%"
       },
       {
         "command": "gitmojiCommit.release.openPr",
-        "title": "Open the Release Pull Request",
-        "category": "Commit Wizard"
+        "title": "%command.release.openPr.title%",
+        "category": "%category%"
       },
       {
         "command": "gitmojiCommit.newBranch",
-        "title": "New Branch from Type and Ticket",
-        "category": "Commit Wizard"
+        "title": "%command.newBranch.title%",
+        "category": "%category%"
       },
       {
         "command": "gitmojiCommit.generatePullRequest",
-        "title": "Generate Pull Request Description",
-        "category": "Commit Wizard"
+        "title": "%command.generatePullRequest.title%",
+        "category": "%category%"
       },
       {
         "command": "gitmojiCommit.newIssue",
-        "title": "New Issue or Milestone (GitHub)",
-        "category": "Commit Wizard"
+        "title": "%command.newIssue.title%",
+        "category": "%category%"
       },
       {
         "command": "gitmojiCommit.installHooks",
-        "title": "Install Git Hooks (husky / lefthook)",
-        "category": "Commit Wizard"
+        "title": "%command.installHooks.title%",
+        "category": "%category%"
       }
     ],
     "jsonValidation": [
@@ -169,7 +169,7 @@
       }
     ],
     "configuration": {
-      "title": "Commit Wizard",
+      "title": "%config.title%",
       "properties": {
         "gitmojiCommit.scopes": {
           "type": "array",
@@ -178,11 +178,11 @@
             "properties": {
               "name": {
                 "type": "string",
-                "description": "The scope name, e.g. \"webview\"."
+                "description": "%setting.scopes.items.properties.name.description%"
               },
               "description": {
                 "type": "string",
-                "description": "A short explanation of when to use this scope."
+                "description": "%setting.scopes.items.properties.description.description%"
               }
             },
             "required": [
@@ -192,7 +192,7 @@
           },
           "default": [],
           "scope": "window",
-          "description": "Project-specific scopes offered in the scope dropdown, each with a short description."
+          "description": "%setting.scopes.description%"
         },
         "gitmojiCommit.types": {
           "type": "array",
@@ -201,15 +201,15 @@
             "properties": {
               "name": {
                 "type": "string",
-                "description": "The type keyword, e.g. \"deps\"."
+                "description": "%setting.types.items.properties.name.description%"
               },
               "description": {
                 "type": "string",
-                "description": "Short explanation shown in the dropdown."
+                "description": "%setting.types.items.properties.description.description%"
               },
               "emoji": {
                 "type": "string",
-                "description": "Gitmoji preselected when this type is picked."
+                "description": "%setting.types.items.properties.emoji.description%"
               }
             },
             "required": [
@@ -218,64 +218,64 @@
           },
           "default": [],
           "scope": "window",
-          "description": "Commit types offered in the Type dropdown. Empty uses the built-in ten types. Overridden by .commit-wizard.json."
+          "description": "%setting.types.description%"
         },
         "gitmojiCommit.emojis": {
           "type": "boolean",
           "default": true,
           "scope": "window",
-          "description": "Prefix commit messages with a Gitmoji. When disabled, the Gitmoji dropdown is hidden. Overridden by .commit-wizard.json."
+          "description": "%setting.emojis.description%"
         },
         "gitmojiCommit.protectedBranches": {
           "type": "array",
           "items": { "type": "string" },
           "default": ["main", "master"],
           "scope": "window",
-          "description": "Branch names or globs on which committing asks for confirmation. Overridden by .commit-wizard.json."
+          "description": "%setting.protectedBranches.description%"
         },
         "gitmojiCommit.ai.enabled": {
           "type": "boolean",
           "default": false,
           "scope": "window",
-          "description": "Offer a \"Draft with AI\" button that sends the staged diff (after you confirm) to a language model you choose in VS Code. Off by default; this setting is never read from .commit-wizard.json."
+          "description": "%setting.ai.enabled.description%"
         },
         "gitmojiCommit.issueTracker.preset": {
           "type": "string",
           "enum": ["", "jira", "linear", "github"],
           "default": "",
           "scope": "window",
-          "description": "Issue tracker preset: detects ticket keys in branch names and links them. Overridden by .commit-wizard.json."
+          "description": "%setting.issueTracker.preset.description%"
         },
         "gitmojiCommit.issueTracker.baseUrl": {
           "type": "string",
           "default": "",
           "scope": "window",
-          "description": "Root URL of the tracker (e.g. https://example.atlassian.net), needed to link Jira and Linear tickets."
+          "description": "%setting.issueTracker.baseUrl.description%"
         },
         "gitmojiCommit.issueUrlTemplate": {
           "type": "string",
           "default": "",
           "scope": "window",
-          "description": "URL linking a reference to its ticket, with an {id} placeholder. Overrides the tracker preset."
+          "description": "%setting.issueUrlTemplate.description%"
         },
         "gitmojiCommit.branchPattern": {
           "type": "string",
           "default": "",
           "scope": "window",
-          "description": "Pattern of the New Branch command ({type}, {issue}, {slug}). Empty uses {type}/{issue}-{slug}."
+          "description": "%setting.branchPattern.description%"
         },
         "gitmojiCommit.issuePattern": {
           "type": "string",
           "default": "",
           "scope": "window",
-          "description": "Regular expression used to detect the issue in the branch name (first capture group, or the whole match). Empty uses the built-in detection."
+          "description": "%setting.issuePattern.description%"
         },
         "gitmojiCommit.emojiPosition": {
           "type": "string",
           "enum": ["before", "after"],
           "default": "before",
           "scope": "window",
-          "description": "Where the Gitmoji goes in the header: before the type (\"✨ feat: x\") or after the colon (\"feat: ✨ x\"). Use \"after\" with Release Please, which only reads headers that start with the type. Overridden by .commit-wizard.json."
+          "description": "%setting.emojiPosition.description%"
         },
         "gitmojiCommit.history.count": {
           "type": "number",
@@ -283,30 +283,30 @@
           "minimum": 1,
           "maximum": 500,
           "scope": "window",
-          "description": "Number of latest commits shown in the Commit History view."
+          "description": "%setting.history.count.description%"
         },
         "gitmojiCommit.history.merges": {
           "type": "string",
           "enum": ["ignore", "flag"],
           "default": "ignore",
           "scope": "window",
-          "description": "Merge commits in the Commit History view: ignore them, or list them with a merge icon."
+          "description": "%setting.history.merges.description%"
         },
         "gitmojiCommit.telemetry.endpoint": {
           "type": "string",
           "default": "",
           "scope": "application",
-          "markdownDescription": "HTTPS URL receiving anonymous usage events as JSON. Empty (default): events are only written to the *Commit Wizard Telemetry* output channel and nothing is sent. Nothing is reported at all when VS Code telemetry is turned off (`telemetry.telemetryLevel`)."
+          "markdownDescription": "%setting.telemetry.endpoint.markdownDescription%"
         },
         "gitmojiCommit.titleWarningLength": {
           "type": "number",
           "default": 50,
-          "description": "Character count at which the title shows a soft warning."
+          "description": "%setting.titleWarningLength.description%"
         },
         "gitmojiCommit.titleMaxLength": {
           "type": "number",
           "default": 72,
-          "description": "Character count at which the title shows a hard warning."
+          "description": "%setting.titleMaxLength.description%"
         }
       }
     }

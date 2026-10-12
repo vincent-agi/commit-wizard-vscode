@@ -7,6 +7,7 @@ import { isHeadPushed } from '../core/pushDecision';
 import { planReword, rebaseCommand } from '../core/rewordPlan';
 import { getActiveRepository, getHeadInfo, getHistory } from '../git/gitExtension';
 import type { GitCommit } from '../git/gitExtension';
+import { t } from '../i18n';
 
 export const HISTORY_VIEW_ID = 'gitmojiCommit.history';
 const SETTINGS = 'gitmojiCommit';
@@ -50,7 +51,7 @@ export class HistoryProvider implements vscode.TreeDataProvider<HistoryEntry> {
     if (this.treeView) {
       const bad = this.entries.filter((entry) => entry.conformity.status === 'non-conforming');
       this.treeView.description = repo
-        ? `${bad.length} non-conforming of ${this.entries.length}`
+        ? t('history.summary', bad.length, this.entries.length)
         : undefined;
     }
     this.emitter.fire();
@@ -77,7 +78,7 @@ export class HistoryProvider implements vscode.TreeDataProvider<HistoryEntry> {
     item.description = [commit.hash.slice(0, 7), commit.authorName].filter(Boolean).join(' · ');
     item.tooltip = new vscode.MarkdownString(
       conformity.reason
-        ? `**Not conforming:** ${conformity.reason}\n\n\`\`\`\n${commit.message}\n\`\`\``
+        ? `**${t('history.notConforming')}** ${conformity.reason}\n\n\`\`\`\n${commit.message}\n\`\`\``
         : `\`\`\`\n${commit.message}\n\`\`\``,
     );
 
@@ -97,7 +98,7 @@ export class HistoryProvider implements vscode.TreeDataProvider<HistoryEntry> {
 
     item.command = {
       command: 'gitmojiCommit.history.show',
-      title: 'Show commit',
+      title: t('history.show'),
       arguments: [entry],
     };
     return item;
@@ -114,7 +115,7 @@ async function showCommit(entry: HistoryEntry): Promise<void> {
     `commit ${commit.hash}`,
     commit.authorName ? `Author: ${commit.authorName}` : '',
     commit.authorDate ? `Date:   ${commit.authorDate.toISOString()}` : '',
-    conformity.reason ? `Problem: ${conformity.reason}` : '',
+    conformity.reason ? t('history.problem', conformity.reason) : '',
     '',
     commit.message,
   ].filter((line, index) => line || index >= 4);
@@ -138,10 +139,10 @@ async function rewordCommit(entry: HistoryEntry, beginAmend: () => Promise<void>
   if (plan === 'rebase-guidance') {
     const command = rebaseCommand(entry.index);
     const choice = await vscode.window.showInformationMessage(
-      `Only the latest commit can be reworded here. To fix an older one, run "${command}" in a terminal, mark ${entry.commit.hash.slice(0, 7)} as "reword", and save the new message.`,
-      'Copy command',
+      t('history.rebase', command, entry.commit.hash.slice(0, 7)),
+      t('history.copyCommand'),
     );
-    if (choice === 'Copy command') {
+    if (choice === t('history.copyCommand')) {
       await vscode.env.clipboard.writeText(command);
     }
     return;
@@ -149,11 +150,11 @@ async function rewordCommit(entry: HistoryEntry, beginAmend: () => Promise<void>
 
   if (plan === 'confirm-pushed') {
     const choice = await vscode.window.showWarningMessage(
-      'This commit is already on the remote. Rewording it rewrites shared history and a later push would need a force-push.',
+      t('history.pushed'),
       { modal: true },
-      'Reword anyway',
+      t('history.rewordAnyway'),
     );
-    if (choice !== 'Reword anyway') {
+    if (choice !== t('history.rewordAnyway')) {
       return;
     }
   }

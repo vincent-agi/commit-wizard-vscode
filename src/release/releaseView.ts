@@ -10,6 +10,7 @@ import {
   getLatestTag,
 } from '../git/gitExtension';
 import { GitHubError, createGitHubClient } from '../github/githubClient';
+import { t } from '../i18n';
 
 export const RELEASE_VIEW_ID = 'gitmojiCommit.release';
 const REFRESH_INTERVAL_MS = 120_000;
@@ -50,8 +51,8 @@ async function readCurrentVersion(root: vscode.Uri, tag: string | undefined): Pr
 
 function bumpLabel(preview: ReleasePreview): string {
   return preview.nextVersion
-    ? `Next version: ${preview.nextVersion} (${preview.bump})`
-    : 'No release: nothing releasable since the last one';
+    ? t('release.next', preview.nextVersion, preview.bump)
+    : t('release.none');
 }
 
 function commitNodes(commits: readonly PreviewCommit[]): Node[] {
@@ -66,14 +67,14 @@ function previewNodes(preview: ReleasePreview): Node[] {
   const nodes: Node[] = [
     {
       label: bumpLabel(preview),
-      description: `from ${preview.currentVersion}`,
+      description: t('release.from', preview.currentVersion),
       icon: new vscode.ThemeIcon('tag'),
     },
   ];
 
   if (preview.sections.length > 0) {
     nodes.push({
-      label: 'Changelog preview',
+      label: t('release.changelog'),
       icon: new vscode.ThemeIcon('list-flat'),
       expanded: true,
       children: preview.sections.map((section) => ({
@@ -85,18 +86,17 @@ function previewNodes(preview: ReleasePreview): Node[] {
   }
   if (preview.hidden.length > 0) {
     nodes.push({
-      label: `Not in the changelog (${preview.hidden.length})`,
-      description: 'docs, chore, ci, ...',
+      label: t('release.hidden', preview.hidden.length),
+      description: t('release.hiddenDesc'),
       icon: new vscode.ThemeIcon('eye-closed'),
       children: commitNodes(preview.hidden),
     });
   }
   if (preview.invisible.length > 0) {
     nodes.push({
-      label: `Invisible to Release Please (${preview.invisible.length})`,
-      description: 'not "type: description"',
-      tooltip:
-        'Release Please only reads headers that start with the type. Commits not following Conventional Commits, or with an emoji before the type, are ignored. Set emojiPosition to "after" to keep the emoji.',
+      label: t('release.invisible', preview.invisible.length),
+      description: t('release.invisibleDesc'),
+      tooltip: t('release.invisibleTip'),
       icon: new vscode.ThemeIcon('warning', new vscode.ThemeColor('list.warningForeground')),
       children: commitNodes(preview.invisible),
     });
@@ -107,13 +107,13 @@ function previewNodes(preview: ReleasePreview): Node[] {
 function checksText(checks: CheckRunSummary | undefined): { text: string; icon: string } {
   switch (checks?.state) {
     case 'success':
-      return { text: 'checks passing', icon: 'pass' };
+      return { text: t('release.checks.success'), icon: 'pass' };
     case 'failure':
-      return { text: `${checks.failed} check(s) failing`, icon: 'error' };
+      return { text: t('release.checks.failure', checks.failed), icon: 'error' };
     case 'pending':
-      return { text: `${checks.pending} check(s) running`, icon: 'sync' };
+      return { text: t('release.checks.pending', checks.pending), icon: 'sync' };
     default:
-      return { text: 'no checks reported', icon: 'circle-outline' };
+      return { text: t('release.checks.none'), icon: 'circle-outline' };
   }
 }
 
@@ -123,33 +123,33 @@ function prNode(state: PrState): Node {
       const version = versionFromReleaseTitle(state.pr.title);
       const checks = checksText(state.checks);
       return {
-        label: `Release PR #${state.pr.number}${version ? `: ${version}` : ''}`,
+        label: t('release.pr', state.pr.number, version ? `: ${version}` : ''),
         description: checks.text,
-        tooltip: `${state.pr.title}\nClick to open on GitHub.`,
+        tooltip: `${state.pr.title}\n${t('release.prOpenHint')}`,
         icon: new vscode.ThemeIcon(checks.icon),
         command: {
           command: 'gitmojiCommit.release.openPr',
-          title: 'Open release PR',
+          title: t('release.prOpenTitle'),
           arguments: [state.pr.url],
         },
       };
     }
     case 'none':
       return {
-        label: 'No open release pull request',
+        label: t('release.prNone'),
         icon: new vscode.ThemeIcon('git-pull-request'),
       };
     case 'signed-out':
       return {
-        label: 'Sign in to GitHub to see the release pull request',
+        label: t('release.prSignIn'),
         icon: new vscode.ThemeIcon('account'),
-        command: { command: 'gitmojiCommit.release.signIn', title: 'Sign in' },
+        command: { command: 'gitmojiCommit.release.signIn', title: t('release.signInTitle') },
       };
     case 'no-github':
-      return { label: 'No github.com remote: release pull request unavailable' };
+      return { label: t('release.prNoGithub') };
     case 'error':
       return {
-        label: 'Release pull request unavailable',
+        label: t('release.prError'),
         description: state.message,
         tooltip: state.message,
         icon: new vscode.ThemeIcon('error'),
@@ -161,13 +161,13 @@ function prNode(state: PrState): Node {
 export class ReleaseProvider implements vscode.TreeDataProvider<Node> {
   private readonly emitter = new vscode.EventEmitter<void>();
   public readonly onDidChangeTreeData = this.emitter.event;
-  private nodes: Node[] = [{ label: 'Loading…' }];
+  private nodes: Node[] = [{ label: t('release.loading') }];
 
   public async refresh(createSession = false): Promise<void> {
     const repo = getActiveRepository();
     const root = vscode.workspace.workspaceFolders?.[0]?.uri;
     if (!repo || !root) {
-      this.nodes = [{ label: 'Open a folder with a Git repository' }];
+      this.nodes = [{ label: t('release.openFolder') }];
       this.emitter.fire();
       return;
     }
@@ -190,7 +190,7 @@ export class ReleaseProvider implements vscode.TreeDataProvider<Node> {
       );
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
-      nodes.push({ label: 'Could not compute the release preview', description: reason });
+      nodes.push({ label: t('release.failed'), description: reason });
     }
 
     nodes.push(prNode(await this.loadReleasePr(createSession)));

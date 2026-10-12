@@ -4,6 +4,8 @@ import { ConfigLoader } from '../config/configLoader';
 import type { Telemetry } from '../telemetry/telemetry';
 import { listPresets, planHooks } from '../core/hookPresets';
 import type { HookManager, PackageManager, PlannedFile, ProjectInfo } from '../core/hookPresets';
+import { t } from '../i18n';
+import type { MessageKey } from '../i18n';
 
 export const INSTALL_HOOKS_COMMAND = 'gitmojiCommit.installHooks';
 
@@ -70,7 +72,7 @@ async function otherManagerWarning(
   const other: HookManager = manager === 'husky' ? 'lefthook' : 'husky';
   const marker = other === 'husky' ? '.husky' : 'lefthook.yml';
   return (await exists(vscode.Uri.joinPath(root, marker)))
-    ? `${other} is already set up in this project. Using both managers at once is not supported.`
+    ? t('hooks.otherManager', other)
     : undefined;
 }
 
@@ -93,15 +95,15 @@ async function confirmOverwrites(
   const names = conflicts.map((file) => file.path).join(', ');
   for (;;) {
     const choice = await vscode.window.showWarningMessage(
-      `These files already exist and would be overwritten: ${names}`,
+      t('hooks.overwrite.ask', names),
       { modal: true },
-      'Show diff',
-      'Overwrite',
+      t('hooks.showDiff'),
+      t('hooks.overwrite'),
     );
-    if (choice === 'Overwrite') {
+    if (choice === t('hooks.overwrite')) {
       return true;
     }
-    if (choice !== 'Show diff') {
+    if (choice !== t('hooks.showDiff')) {
       return false;
     }
     for (const file of conflicts) {
@@ -109,7 +111,7 @@ async function confirmOverwrites(
         'vscode.diff',
         vscode.Uri.joinPath(root, file.path),
         proposed.set(file.path, file.content),
-        `${file.path} (current ↔ proposed)`,
+        t('hooks.diffTitle', file.path),
         { preview: false },
       );
     }
@@ -144,17 +146,17 @@ export async function installHooks(
 ): Promise<void> {
   const folder = vscode.workspace.workspaceFolders?.[0];
   if (!folder) {
-    vscode.window.showWarningMessage('Open a workspace folder to install Git hooks.');
+    vscode.window.showWarningMessage(t('hooks.needFolder'));
     return;
   }
   const root = folder.uri;
 
   const manager = await vscode.window.showQuickPick(
     [
-      { label: 'husky', description: 'Hook scripts in .husky/ (needs Node.js)', value: 'husky' },
-      { label: 'lefthook', description: 'Single lefthook.yml', value: 'lefthook' },
+      { label: 'husky', description: t('hooks.manager.husky'), value: 'husky' },
+      { label: 'lefthook', description: t('hooks.manager.lefthook'), value: 'lefthook' },
     ] as const,
-    { title: 'Git hook manager', placeHolder: 'Which hook manager should run the checks?' },
+    { title: t('hooks.manager.title'), placeHolder: t('hooks.manager.placeholder') },
   );
   if (!manager) {
     return;
@@ -162,8 +164,12 @@ export async function installHooks(
 
   const warning = await otherManagerWarning(root, manager.value);
   if (warning) {
-    const proceed = await vscode.window.showWarningMessage(warning, { modal: true }, 'Continue');
-    if (proceed !== 'Continue') {
+    const proceed = await vscode.window.showWarningMessage(
+      warning,
+      { modal: true },
+      t('hooks.continue'),
+    );
+    if (proceed !== t('hooks.continue')) {
       return;
     }
   }
@@ -173,15 +179,15 @@ export async function installHooks(
   const available = presets.filter((entry) => !entry.unavailableReason);
   const picked = await vscode.window.showQuickPick(
     available.map(({ preset }) => ({
-      label: preset.label,
+      label: t(`preset.${preset.id}.label` as MessageKey),
       description: preset.hook,
-      detail: preset.description,
+      detail: t(`preset.${preset.id}.desc` as MessageKey),
       picked: preset.id !== 'protected-branch' && preset.id !== 'no-debug',
       id: preset.id,
     })),
     {
-      title: 'Hooks to install',
-      placeHolder: 'Select the checks to run',
+      title: t('hooks.pick.title'),
+      placeHolder: t('hooks.pick.placeholder'),
       canPickMany: true,
     },
   );
@@ -208,10 +214,10 @@ export async function installHooks(
   });
 
   const action = await vscode.window.showInformationMessage(
-    `Wrote ${plan.files.map((file) => file.path).join(', ')}. Install the dependencies to activate the hooks.`,
-    'Prepare install command',
+    t('hooks.wrote', plan.files.map((file) => file.path).join(', ')),
+    t('hooks.prepare'),
   );
-  if (action === 'Prepare install command') {
+  if (action === t('hooks.prepare')) {
     const terminal = vscode.window.createTerminal({ name: 'Commit Wizard', cwd: root });
     terminal.show();
     // Typed but not executed: the user reviews the command and presses Enter.
