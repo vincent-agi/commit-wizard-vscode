@@ -35,6 +35,7 @@ export function generateIssueFormHtml(webview: vscode.Webview, extensionUri: vsc
   <title>New Issue or Milestone</title>
 </head>
 <body>
+  <main aria-label="New Issue or Milestone">
   <div id="repo"></div>
   <div id="banner" role="alert"></div>
   <button type="button" class="secondary hidden" id="signIn">Sign in to GitHub</button>
@@ -70,8 +71,8 @@ export function generateIssueFormHtml(webview: vscode.Webview, extensionUri: vsc
     <label for="notes">Notes</label>
     <textarea id="notes"></textarea>
 
-    <label>Labels</label>
-    <div id="labels"></div>
+    <span class="field-label" id="labelsLabel">Labels</span>
+    <div id="labels" role="group" aria-labelledby="labelsLabel"></div>
 
     <label for="milestone">Milestone</label>
     <select id="milestone"><option value="">(none)</option></select>
@@ -91,10 +92,12 @@ export function generateIssueFormHtml(webview: vscode.Webview, extensionUri: vsc
     <input type="text" id="milestoneDue" placeholder="YYYY-MM-DD (optional)" />
   </section>
 
-  <label>Preview</label>
-  <div id="preview"></div>
+  <span class="field-label" id="previewLabel">Preview</span>
+  <div id="preview" role="region" aria-labelledby="previewLabel" tabindex="0"></div>
 
   <button type="button" id="submit">Create issue</button>
+
+  </main>
 
   <script nonce="${nonce}" src="${scriptUri}"></script>
 </body>

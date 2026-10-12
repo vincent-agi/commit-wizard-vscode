@@ -141,6 +141,16 @@ function applyInput(input: CommitFormInput): void {
   coAuthorsTextarea.value = (input.coAuthors ?? []).join('\n');
 }
 
+/** Spoken form of the one-letter status, so a screen reader does not read "M" or "U". */
+const STATUS_WORDS: Record<string, string> = {
+  M: 'modified',
+  A: 'added',
+  D: 'deleted',
+  R: 'renamed',
+  C: 'copied',
+  U: 'untracked',
+};
+
 function renderFileList(list: HTMLUListElement, files: ChangedFile[], staged: boolean): void {
   list.textContent = '';
   for (const file of files) {
@@ -149,6 +159,7 @@ function renderFileList(list: HTMLUListElement, files: ChangedFile[], staged: bo
     const box = document.createElement('input');
     box.type = 'checkbox';
     box.checked = staged;
+    box.setAttribute('aria-label', `${STATUS_WORDS[file.status] ?? 'changed'} ${file.path}`);
     box.addEventListener('change', () =>
       vscode.postMessage({ type: box.checked ? 'stage' : 'unstage', paths: [file.path] }),
     );
@@ -189,6 +200,7 @@ function renderSuggestion(): void {
   if (differs && suggestion) {
     const parts = [suggestion.type, suggestion.scope ? `(${suggestion.scope})` : ''];
     suggestionText.textContent = `Suggested: ${parts.join('')}`;
+    applySuggestionButton.setAttribute('aria-label', `Apply suggestion ${parts.join('')}`);
   }
 }
 
@@ -361,6 +373,8 @@ function showFailure(failure: CommitFailure): void {
   commitErrorDetails.hidden = !failure.details;
   commitErrorDetails.open = failure.kind === 'hook';
   commitError.classList.add('visible');
+  // Move focus to the message so keyboard and screen-reader users land on the problem.
+  commitError.focus();
 }
 
 function hideCommitError(): void {

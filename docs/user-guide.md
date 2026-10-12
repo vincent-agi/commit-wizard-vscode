@@ -386,6 +386,26 @@ regenerate it.
   packages, and run `git config --unset core.hooksPath` for husky (`npx lefthook uninstall` for
   lefthook).
 
+## Keyboard and screen-reader use
+
+Everything can be done without a mouse.
+
+- **Focus the Commit Builder** from anywhere: `Ctrl+K Ctrl+G` (`Cmd+K Cmd+G` on macOS), or the
+  command **Commit Wizard: Focus the Commit Builder**. Rebind it in *Keyboard Shortcuts* under
+  `gitmojiCommit.focus`.
+- `Tab` / `Shift+Tab` move through the controls in reading order; every field has a label, the
+  icon-only **+** button is announced as "Add scope", and each file checkbox reads like
+  "modified src/core/a.ts" rather than a bare status letter. The *Changes* section and the output
+  of a failed commit are standard collapsible sections (`Enter` / `Space`).
+- Problems are announced: configuration warnings, the protected-branch notice, invalid co-authors
+  and commit failures are alerts, progress ("Committing…") is a polite status, and after a failed
+  commit the focus moves to the error message so you land on the reason.
+- The **Preview** is a labelled region you can reach with `Tab` and scroll with the arrow keys.
+- Issue links under the Issue field are real links: `Tab` to one and press `Enter`.
+- A visible focus outline is always drawn, and the panels adapt to **high-contrast** themes
+  (borders on controls, forced-colors support). The history, release and pull request flows use
+  VS Code's own tree views, quick picks and dialogs, which are accessible out of the box.
+
 ## Telemetry
 
 Commit Wizard can report **anonymous usage counts**, and only if you allow it: VS Code's own

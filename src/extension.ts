@@ -33,6 +33,9 @@ export function activate(context: vscode.ExtensionContext): void {
       IssueFormPanel.reload(context.extensionUri);
     }),
     registerInstallHooks(configLoader, telemetry),
+    vscode.commands.registerCommand('gitmojiCommit.focus', () =>
+      vscode.commands.executeCommand(`${CommitViewProvider.viewType}.focus`),
+    ),
     registerNewBranch(configLoader, telemetry),
     registerHistory(configLoader, () => provider.beginAmend(), telemetry),
     registerRelease(),

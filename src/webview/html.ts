@@ -57,6 +57,7 @@ export function generateHtml(webview: vscode.Webview, extensionUri: vscode.Uri):
   <title>Commit Builder</title>
 </head>
 <body>
+  <main aria-label="Commit Builder">
   <div id="configWarnings" role="alert"></div>
   <div id="protectedBanner" role="alert"></div>
 
@@ -72,9 +73,9 @@ export function generateHtml(webview: vscode.Webview, extensionUri: vscode.Uri):
       <button type="button" class="secondary" id="unstageAll">Unstage all</button>
     </div>
     <div id="stagedTitle" class="list-title">Staged</div>
-    <ul id="stagedList" class="file-list"></ul>
+    <ul id="stagedList" class="file-list" aria-labelledby="stagedTitle"></ul>
     <div id="unstagedTitle" class="list-title">Not staged</div>
-    <ul id="unstagedList" class="file-list"></ul>
+    <ul id="unstagedList" class="file-list" aria-labelledby="unstagedTitle"></ul>
     <div id="changesHint"></div>
   </details>
 
@@ -99,18 +100,18 @@ export function generateHtml(webview: vscode.Webview, extensionUri: vscode.Uri):
   <label for="scope">Scope</label>
   <div class="row">
     <select id="scope"><option value="">(none)</option></select>
-    <button type="button" class="secondary" id="addScope" title="Add scope">+</button>
+    <button type="button" class="secondary" id="addScope" title="Add scope" aria-label="Add scope">+</button>
   </div>
 
   <label for="issue">Issue / Ticket ID</label>
   <div class="row">
-    <select id="issueKeyword">${issueKeywordOptionsHtml()}</select>
+    <select id="issueKeyword" aria-label="Issue keyword">${issueKeywordOptionsHtml()}</select>
     <input type="text" id="issue" placeholder="123, PROJ-45" title="One or several references, separated by spaces or commas" />
   </div>
   <div id="issueLinks"></div>
 
   <label for="description">Short description</label>
-  <input type="text" id="description" placeholder="add live preview component" />
+  <input type="text" id="description" placeholder="add live preview component" aria-describedby="charCounter" />
   <div id="charCounter">0 characters</div>
   <button type="button" class="secondary" id="aiDraft" hidden title="Sends the staged diff to a language model you choose, after you confirm">Draft with AI</button>
 
@@ -127,11 +128,11 @@ export function generateHtml(webview: vscode.Webview, extensionUri: vscode.Uri):
   </div>
 
   <label for="coAuthors">Co-authored-by</label>
-  <textarea id="coAuthors" placeholder="One per line: Name &lt;email@example.com&gt;"></textarea>
+  <textarea id="coAuthors" placeholder="One per line: Name &lt;email@example.com&gt;" aria-describedby="coAuthorsError"></textarea>
   <div id="coAuthorsError" role="alert"></div>
 
-  <label>Preview</label>
-  <div id="preview"></div>
+  <span class="field-label" id="previewLabel">Preview</span>
+  <div id="preview" role="region" aria-labelledby="previewLabel" tabindex="0"></div>
 
   <div class="checkbox-row">
     <input type="checkbox" id="amend" />
@@ -141,13 +142,15 @@ export function generateHtml(webview: vscode.Webview, extensionUri: vscode.Uri):
   <button type="button" id="commitNow">Commit now</button>
   <button type="button" class="secondary" id="commitPush">Commit &amp; Push</button>
   <div id="commitStatus" role="status" aria-live="polite"></div>
-  <div id="commitError" role="alert">
+  <div id="commitError" role="alert" tabindex="-1">
     <div id="commitErrorSummary"></div>
     <details id="commitErrorDetails">
       <summary>Show output</summary>
       <pre id="commitErrorOutput"></pre>
     </details>
   </div>
+
+  </main>
 
   <script nonce="${nonce}" src="${scriptUri}"></script>
 </body>

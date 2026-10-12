@@ -7,7 +7,8 @@ export function getStyles(): string {
       color: var(--vscode-foreground);
       padding: 8px 12px 16px;
     }
-    label {
+    label,
+    .field-label {
       display: block;
       margin-top: 10px;
       margin-bottom: 4px;
@@ -31,6 +32,45 @@ export function getStyles(): string {
     textarea:focus {
       outline: 1px solid var(--vscode-focusBorder);
       outline-offset: -1px;
+    }
+    button:focus-visible,
+    summary:focus-visible,
+    a:focus-visible,
+    input[type='checkbox']:focus-visible,
+    [tabindex]:focus-visible {
+      outline: 1px solid var(--vscode-focusBorder);
+      outline-offset: 2px;
+    }
+    /* High-contrast themes: borders instead of subtle fills, so controls stay distinguishable. */
+    body.vscode-high-contrast button,
+    body.vscode-high-contrast-light button {
+      border: 1px solid var(--vscode-contrastBorder, currentColor);
+    }
+    body.vscode-high-contrast button:hover,
+    body.vscode-high-contrast-light button:hover {
+      outline: 1px dashed var(--vscode-contrastActiveBorder, var(--vscode-focusBorder));
+    }
+    body.vscode-high-contrast select,
+    body.vscode-high-contrast input[type='text'],
+    body.vscode-high-contrast textarea,
+    body.vscode-high-contrast-light select,
+    body.vscode-high-contrast-light input[type='text'],
+    body.vscode-high-contrast-light textarea {
+      border: 1px solid var(--vscode-contrastBorder, currentColor);
+    }
+    body.vscode-high-contrast #preview,
+    body.vscode-high-contrast-light #preview,
+    body.vscode-high-contrast #commitError,
+    body.vscode-high-contrast-light #commitError {
+      border-color: var(--vscode-contrastBorder, currentColor);
+    }
+    @media (forced-colors: active) {
+      button,
+      select,
+      input,
+      textarea {
+        border: 1px solid ButtonText;
+      }
     }
     textarea {
       resize: vertical;

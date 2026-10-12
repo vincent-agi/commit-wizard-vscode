@@ -83,7 +83,19 @@
         { "command": "gitmojiCommit.release.signIn", "when": "false" }
       ]
     },
+    "keybindings": [
+      {
+        "command": "gitmojiCommit.focus",
+        "key": "ctrl+k ctrl+g",
+        "mac": "cmd+k cmd+g"
+      }
+    ],
     "commands": [
+      {
+        "command": "gitmojiCommit.focus",
+        "title": "Focus the Commit Builder",
+        "category": "Commit Wizard"
+      },
       {
         "command": "gitmojiCommit.history.refresh",
         "title": "Refresh Commit History",
