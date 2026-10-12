@@ -39,3 +39,59 @@ jobs:
       - run: npm ci
 
       - run: npm run compile
+
+  package:
+    needs: [release-please, verify-build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Package the extension
+        run: npx --no -- vsce package --allow-missing-repository --out commit-wizard-vscode.vsix
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vsix
+          path: commit-wizard-vscode.vsix
+          if-no-files-found: error
+
+      - name: Attach the .vsix to the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ needs.release-please.outputs.tag_name }}" commit-wizard-vscode.vsix --clobber
+
+  publish-marketplace:
+    needs: package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: vsix
+
+      - name: Publish to the VS Code Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -z "$VSCE_PAT" ]; then
+            echo "::notice::VSCE_PAT is not set; skipping the VS Code Marketplace publish."
+            exit 0
+          fi
+          npx --no -- vsce publish --packagePath commit-wizard-vscode.vsix

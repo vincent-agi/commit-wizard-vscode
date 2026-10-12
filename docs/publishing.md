@@ -68,7 +68,19 @@ npx vsce login vincent-agi
 Paste the PAT when prompted. This caches the token locally (`~/.vsce`) so subsequent `publish`
 calls don't ask again.
 
-## Publishing a release
+## Automated publishing (CI)
+
+When the Release Please PR is merged, `.github/workflows/release-please.yml` runs after the
+release is created: `verify-build` (compile) -> `package` (builds the `.vsix`, uploads it as a
+workflow artifact and attaches it to the GitHub release) -> `publish-marketplace`.
+
+One-time setup: create the Marketplace PAT as described above, then add it as the repository
+secret **`VSCE_PAT`** (Settings > Secrets and variables > Actions). When the secret is missing the
+publish job logs a notice and succeeds without publishing, so forks and the first setup do not
+fail. The token is only exposed to the publish step as an environment variable and is masked in
+logs. Check the Marketplace listing after the first automated run.
+
+## Publishing a release (manual)
 
 ### 1. Bump the version and update docs
 
