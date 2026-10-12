@@ -31,6 +31,13 @@
         }
       ]
     },
+    "commands": [
+      {
+        "command": "gitmojiCommit.installHooks",
+        "title": "Install Git Hooks (husky / lefthook)",
+        "category": "Commit Wizard"
+      }
+    ],
     "jsonValidation": [
       {
         "fileMatch": ".commit-wizard.json",

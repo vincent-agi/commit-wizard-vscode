@@ -55,6 +55,25 @@ npm run lint     # ESLint over src/**/*.ts
 npm run format   # Prettier --write
 ```
 
+## Git hooks in this repository
+
+The extension ships an **Install Git Hooks** command (`gitmojiCommit.installHooks`, see
+`docs/user-guide.md`). To try it while developing, press `F5`, open a throwaway Git repository in
+the Extension Development Host, and run **Commit Wizard: Install Git Hooks** from the Command
+Palette. Verify:
+
+1. the chosen files appear (`.husky/*` or `lefthook.yml`, plus `commitlint.config.cjs`);
+2. running the command twice shows no prompt the second time (identical content), and shows the
+   **Show diff / Overwrite** modal after you edit a generated file;
+3. after running the prefilled install command, `git commit -m "bad message"` is rejected and
+   `git commit -m "✨ feat: ok"` passes.
+
+The generated shell checks are exercised for real by `src/core/hookPresets.spec.ts`, which runs
+them against temporary Git repositories.
+
+To remove hooks from a test repo: delete the generated files and run
+`git config --unset core.hooksPath`.
+
 ## Building
 
 ```bash

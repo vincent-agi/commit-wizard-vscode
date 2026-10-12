@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { ConfigLoader } from './config/configLoader';
+import { registerInstallHooks } from './hooks/installHooks';
 import { CommitViewProvider } from './webview/CommitViewProvider';
 
 /**
@@ -13,6 +14,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     configLoader,
+    registerInstallHooks(configLoader),
     vscode.window.registerWebviewViewProvider(CommitViewProvider.viewType, provider),
   );
 }

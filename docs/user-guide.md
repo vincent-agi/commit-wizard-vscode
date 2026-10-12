@@ -138,6 +138,49 @@ automatically when it changes — no window reload needed.
 (only `scopes` are merged). An invalid field is ignored and reported in a warning banner at the top
 of the panel; the other fields still apply, and an invalid JSON file falls back to the settings.
 
+## Git hooks
+
+Run **Commit Wizard: Install Git Hooks (husky / lefthook)** from the Command Palette to set up
+local checks that run before commits and pushes.
+
+1. Pick a hook manager: **husky** (scripts in `.husky/`) or **lefthook** (a single `lefthook.yml`).
+2. Tick the checks to install. Only checks that can work in your project are listed; script-based
+   ones depend on your `package.json` scripts.
+
+   | Check | Hook | Needs |
+   | --- | --- | --- |
+   | Lint | `pre-commit` | a `lint` script |
+   | Format check | `pre-commit` | a `format:check` script |
+   | Type-check | `pre-commit` | a `typecheck` script |
+   | No debug statements | `pre-commit` | — (blocks staged `console.log` / `debugger` in JS/TS) |
+   | Secret scan | `pre-commit` | — (private keys, AWS and GitHub tokens) |
+   | Large file guard | `pre-commit` | — (staged files over 1 MB) |
+   | Protected branches | `pre-commit` | — (no direct commits on `main` / `master`) |
+   | Tests | `pre-push` | a `test` script |
+   | Build | `pre-push` | a `compile` or `build` script |
+   | Conventional Commits | `commit-msg` | — (installs commitlint) |
+
+3. If a target file already exists with different content, a modal lists it and offers **Show
+   diff** and **Overwrite**. Nothing is overwritten silently, and cancelling writes nothing.
+4. The files are written to the workspace root, and the extension offers to type the dependency
+   install command in a terminal. It is **never executed for you**: review it and press Enter.
+
+The package manager is detected from the lockfile (`pnpm-lock.yaml`, `yarn.lock`, otherwise npm).
+The generated files are plain, committable files: the extension is not needed to run the hooks.
+
+The **Conventional Commits** check generates a `commitlint.config.cjs` that accepts the optional
+leading Gitmoji (`✨ feat(api): …`) and restricts the type to the ones in your configuration
+(see [Team configuration](#team-configuration)). Re-run the command after changing your types to
+regenerate it.
+
+**Disabling or removing the hooks**
+
+- Skip them once: `HUSKY=0 git commit …` / `LEFTHOOK=0 git commit …`, or `git commit --no-verify`
+  from a terminal (the extension itself never uses `--no-verify`).
+- Remove them: delete `.husky/` or `lefthook.yml` and `commitlint.config.cjs`, uninstall the
+  packages, and run `git config --unset core.hooksPath` for husky (`npx lefthook uninstall` for
+  lefthook).
+
 ## Configuration reference
 
 | Setting | Default | Description |
