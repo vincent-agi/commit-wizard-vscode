@@ -3,16 +3,17 @@ import type { CommitFormInput, IssueKeyword } from './types';
 
 const COLON_KEYWORDS: ReadonlySet<IssueKeyword> = new Set(['refs', 'seeAlso']);
 const PURELY_NUMERIC = /^\d+$/;
+const ISSUE_SEPARATOR = /[\s,]+/;
 
 /**
  * Normalizes an issue value for GitHub/GitLab autolinking: prepends `#` only when the value is
  * purely numeric (e.g. `123` -> `#123`), since that's the literal syntax GitHub/GitLab require
  * to recognize an issue reference. Left untouched when it already has a `#` (idempotent — no
- * `##` double-hash) or when it's a non-numeric, Jira-style key (e.g. `123`), which never
+ * `##` double-hash) or when it's a non-numeric, Jira-style key (e.g. `PROJ-123`), which never
  * takes a `#`.
  */
 function normalizeIssue(issue: string): string {
-  return PURELY_NUMERIC.test(issue) ? `#${issue}` : `#${issue}`;
+  return PURELY_NUMERIC.test(issue) ? `#${issue}` : issue;
 }
 
 /**
@@ -32,27 +33,47 @@ function formatIssueLine(keyword: IssueKeyword, issue: string): string {
  * Builds a Conventional Commits message, prefixed with the gitmoji selected in
  * `input.gitmoji`, from a {@link CommitFormInput}.
  *
+ * Layout: title, then an optional body paragraph, then an optional footer block. Paragraphs are
+ * separated by one blank line; footer lines are consecutive (Git trailer format), in the order
+ * `BREAKING CHANGE`, issue references, `Co-authored-by`. When `breakingChange` is set, a `!` is
+ * added after the type/scope.
+ *
+ * `input.issue` may hold several references separated by spaces or commas; each gets its own
+ * footer line.
+ *
  * @param input - Values collected from the commit builder form.
  * @returns The formatted commit message, ready to write into a Git commit input box.
  */
 export function formatCommitMessage(input: CommitFormInput): string {
-  const gitmoji = input.gitmoji;
   const scope = input.scope?.trim();
-  const issue = input.issue?.trim();
-  let body = input.body?.trim();
+  const body = input.body?.trim();
   const breakingChangeDescription = input.breakingChangeDescription?.trim();
 
   const scopePart = scope ? `(${scope})` : '';
-  const issuePart = issue ? `${formatIssueLine(input.issueKeyword, issue)}\n` : '';
-  const title = `${gitmoji} ${input.type}${scopePart}: ${input.description}`;
+  const breakingMark = input.breakingChange ? '!' : '';
+  const title = `${input.gitmoji} ${input.type}${scopePart}${breakingMark}: ${input.description}`;
 
-  const paragraphs = [title];
-
-  body = `${body ?? ''}\n\n${issuePart}`;
-  paragraphs.push(body);
+  const footers: string[] = [];
 
   if (input.breakingChange && breakingChangeDescription) {
-    paragraphs.push(`BREAKING CHANGE: ${breakingChangeDescription}`);
+    footers.push(`BREAKING CHANGE: ${breakingChangeDescription}`);
+  }
+
+  const issues = (input.issue ?? '').split(ISSUE_SEPARATOR).filter(Boolean);
+  for (const issue of issues) {
+    footers.push(formatIssueLine(input.issueKeyword, issue));
+  }
+
+  for (const coAuthor of input.coAuthors ?? []) {
+    footers.push(`Co-authored-by: ${coAuthor}`);
+  }
+
+  const paragraphs = [title];
+  if (body) {
+    paragraphs.push(body);
+  }
+  if (footers.length > 0) {
+    paragraphs.push(footers.join('\n'));
   }
 
   return paragraphs.join('\n\n');

@@ -65,6 +65,7 @@ export interface CommitFormInput {
   /** The gitmoji glyph to prefix the message with, picked from the Gitmoji dropdown. */
   gitmoji: string;
   scope?: string;
+  /** One or more issue references, separated by spaces or commas (e.g. `123, PROJ-45`). */
   issue?: string;
   /** Which footer keyword to prefix `issue` with. Only meaningful when `issue` is set. */
   issueKeyword: IssueKeyword;
@@ -72,4 +73,6 @@ export interface CommitFormInput {
   body?: string;
   breakingChange: boolean;
   breakingChangeDescription?: string;
+  /** Co-authors in `Name <email>` form, each emitted as a `Co-authored-by` footer. */
+  coAuthors?: string[];
 }
