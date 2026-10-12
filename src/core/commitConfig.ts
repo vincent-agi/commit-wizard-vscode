@@ -27,6 +27,8 @@ export interface CommitConfig {
    * placeholders. Absent: the standard layout is used.
    */
   issueTemplate?: string;
+  /** Where the emoji goes in the header; `after` keeps the type first (Release Please). */
+  emojiPosition: 'before' | 'after';
   /** Issue tracker preset providing branch detection and links. */
   issueTracker?: IssueTrackerConfig;
   /** URL with an `{id}` placeholder linking a reference to its ticket. */
@@ -67,6 +69,7 @@ export const DEFAULT_CONFIG: CommitConfig = {
   })),
   scopes: [],
   emojis: true,
+  emojiPosition: 'before',
   titleWarningLength: 50,
   titleMaxLength: 72,
   protectedBranches: ['main', 'master'],
@@ -186,6 +189,14 @@ export function parseConfigLayer(raw: unknown): { layer: ConfigLayer; errors: st
       layer.emojis = raw.emojis;
     } else {
       errors.push('"emojis" must be true or false.');
+    }
+  }
+
+  if (raw.emojiPosition !== undefined) {
+    if (raw.emojiPosition === 'before' || raw.emojiPosition === 'after') {
+      layer.emojiPosition = raw.emojiPosition;
+    } else {
+      errors.push('"emojiPosition" must be "before" or "after".');
     }
   }
 
@@ -341,6 +352,9 @@ export function resolveConfig(layers: readonly ConfigLayer[]): {
     }
     if (layer.emojis !== undefined) {
       config.emojis = layer.emojis;
+    }
+    if (layer.emojiPosition !== undefined) {
+      config.emojiPosition = layer.emojiPosition;
     }
     if (layer.titleWarningLength !== undefined) {
       config.titleWarningLength = layer.titleWarningLength;

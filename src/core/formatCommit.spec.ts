@@ -90,6 +90,26 @@ describe('formatCommitMessage', () => {
     );
   });
 
+  it('puts the emoji after the colon when emojiPosition is "after"', () => {
+    expect(formatCommitMessage({ ...base, emojiPosition: 'after', scope: 'api' })).toBe(
+      'feat(api): ✨ add live preview',
+    );
+    expect(
+      formatCommitMessage({
+        ...base,
+        emojiPosition: 'after',
+        breakingChange: true,
+        breakingChangeDescription: 'x',
+      }),
+    ).toBe('feat!: ✨ add live preview\n\nBREAKING CHANGE: x');
+  });
+
+  it('ignores emojiPosition when there is no emoji', () => {
+    expect(formatCommitMessage({ ...base, gitmoji: '', emojiPosition: 'after' })).toBe(
+      'feat: add live preview',
+    );
+  });
+
   it('accepts a custom, non-default type', () => {
     expect(formatCommitMessage({ ...base, type: 'deps', gitmoji: '' })).toBe(
       'deps: add live preview',

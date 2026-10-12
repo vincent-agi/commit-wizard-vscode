@@ -138,6 +138,14 @@ describe('parseConfigLayer (assistance options)', () => {
   });
 });
 
+describe('parseConfigLayer (emoji position)', () => {
+  it('accepts before and after only', () => {
+    expect(parseConfigLayer({ emojiPosition: 'after' }).layer.emojiPosition).toBe('after');
+    expect(parseConfigLayer({ emojiPosition: 'middle' }).errors).toHaveLength(1);
+    expect(DEFAULT_CONFIG.emojiPosition).toBe('before');
+  });
+});
+
 describe('parseConfigLayer (workflow options)', () => {
   it('accepts a tracker preset with an http(s) base URL', () => {
     expect(

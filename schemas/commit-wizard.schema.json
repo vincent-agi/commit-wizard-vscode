@@ -48,6 +48,11 @@
       "description": "When false, the Gitmoji dropdown is hidden and messages have no emoji prefix.",
       "default": true
     },
+    "emojiPosition": {
+      "enum": ["before", "after"],
+      "default": "before",
+      "description": "Where the emoji goes: before the type (\"✨ feat: x\") or after the colon (\"feat: ✨ x\"). Use \"after\" with tools that expect the type first, such as Release Please."
+    },
     "titleWarningLength": {
       "type": "integer",
       "minimum": 1,

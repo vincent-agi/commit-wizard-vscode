@@ -61,6 +61,12 @@ export interface CommitFormInput {
    * emojis are disabled: the message then has no emoji prefix.
    */
   gitmoji: string;
+  /**
+   * Where the emoji goes: `before` the type (`✨ feat: x`) or `after` the colon (`feat: ✨ x`).
+   * The second form keeps the header readable by tools that expect the type first, such as
+   * Release Please. Defaults to `before`.
+   */
+  emojiPosition?: 'before' | 'after';
   scope?: string;
   /** One or more issue references, separated by spaces or commas (e.g. `123, PROJ-45`). */
   issue?: string;
