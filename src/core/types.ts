@@ -1,15 +1,6 @@
 /** One of the ten built-in Conventional Commit types. */
 export type DefaultCommitType =
-  | 'feat'
-  | 'fix'
-  | 'docs'
-  | 'style'
-  | 'refactor'
-  | 'perf'
-  | 'test'
-  | 'chore'
-  | 'build'
-  | 'ci';
+  'feat' | 'fix' | 'docs' | 'style' | 'refactor' | 'perf' | 'test' | 'chore' | 'build' | 'ci';
 
 /** A commit type name. Any string, since teams can define their own types. */
 export type CommitType = string;

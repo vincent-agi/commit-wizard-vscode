@@ -20,7 +20,5 @@ export function addScope(existingScopes: readonly Scope[], newScope: Scope): Sco
   }
 
   const withoutDuplicate = existingScopes.filter((scope) => scope.name !== name);
-  return [...withoutDuplicate, { name, description }].sort((a, b) =>
-    a.name.localeCompare(b.name),
-  );
+  return [...withoutDuplicate, { name, description }].sort((a, b) => a.name.localeCompare(b.name));
 }

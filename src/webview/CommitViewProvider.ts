@@ -100,9 +100,7 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
 
   private async addScope(): Promise<void> {
     if (!vscode.workspace.workspaceFolders?.length) {
-      vscode.window.showWarningMessage(
-        'Open a workspace folder to add and persist a new scope.',
-      );
+      vscode.window.showWarningMessage('Open a workspace folder to add and persist a new scope.');
       return;
     }
 

@@ -41,9 +41,7 @@ function gitmojiOptionsHtml(): string {
  */
 export function generateHtml(webview: vscode.Webview, extensionUri: vscode.Uri): string {
   const nonce = generateNonce();
-  const scriptUri = webview.asWebviewUri(
-    vscode.Uri.joinPath(extensionUri, 'dist', 'webview.js'),
-  );
+  const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'dist', 'webview.js'));
   const csp = [
     `default-src 'none'`,
     `style-src ${webview.cspSource} 'unsafe-inline'`,

@@ -90,7 +90,11 @@ export const GITMOJI_CATALOG: readonly GitmojiEntry[] = [
   },
   { emoji: '🥅', code: ':goal_net:', description: 'Catch errors.' },
   { emoji: '💫', code: ':dizzy:', description: 'Add or update animations and transitions.' },
-  { emoji: '🗑️', code: ':wastebasket:', description: 'Deprecate code that needs to be cleaned up.' },
+  {
+    emoji: '🗑️',
+    code: ':wastebasket:',
+    description: 'Deprecate code that needs to be cleaned up.',
+  },
   {
     emoji: '🛂',
     code: ':passport_control:',

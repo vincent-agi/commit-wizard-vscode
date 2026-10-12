@@ -21,15 +21,13 @@ describe('addScope', () => {
   });
 
   it('replaces the description of an existing scope with the same name instead of duplicating it', () => {
-    expect(
-      addScope([webview], { name: 'webview', description: 'Updated description' }),
-    ).toEqual([{ name: 'webview', description: 'Updated description' }]);
+    expect(addScope([webview], { name: 'webview', description: 'Updated description' })).toEqual([
+      { name: 'webview', description: 'Updated description' },
+    ]);
   });
 
   it('rejects an empty or whitespace-only name, returning the list unchanged', () => {
-    expect(addScope([webview], { name: '', description: 'Some description' })).toEqual([
-      webview,
-    ]);
+    expect(addScope([webview], { name: '', description: 'Some description' })).toEqual([webview]);
     expect(addScope([webview], { name: '   ', description: 'Some description' })).toEqual([
       webview,
     ]);
