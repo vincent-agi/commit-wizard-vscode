@@ -6,11 +6,19 @@ import {
   validateMilestone,
 } from '../core/issueTemplate';
 import type { IssueFormInput, MilestoneFormInput } from '../core/issueTemplate';
+import { restoreControls, snapshotControls } from '../webview/persist';
+import type { PersistedControl } from '../webview/persist';
 import type { HostToIssueFormMessage, IssueFormToHostMessage } from './messages';
 
-declare function acquireVsCodeApi(): { postMessage(message: IssueFormToHostMessage): void };
+declare function acquireVsCodeApi(): {
+  postMessage(message: IssueFormToHostMessage): void;
+  getState(): unknown;
+  setState(state: unknown): void;
+};
 
 const vscode = acquireVsCodeApi();
+// Read before the first render, which would overwrite it with the blank form.
+const savedState = vscode.getState();
 
 const $ = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
 
@@ -36,6 +44,23 @@ const milestoneDescription = $<HTMLTextAreaElement>('milestoneDescription');
 const milestoneDue = $<HTMLInputElement>('milestoneDue');
 const previewBox = $<HTMLDivElement>('preview');
 const submitButton = $<HTMLButtonElement>('submit');
+
+const persistedControls: PersistedControl[] = [
+  modeSelect,
+  typeSelect,
+  scopeSelect,
+  titleInput,
+  contextArea,
+  goalArea,
+  scopeItemsArea,
+  criteriaArea,
+  notesArea,
+  milestoneSelect,
+  assigneesInput,
+  milestoneTitle,
+  milestoneDescription,
+  milestoneDue,
+];
 
 let issueTemplate: string | undefined;
 let busy = false;
@@ -77,6 +102,7 @@ function isIssueMode(): boolean {
 }
 
 function render(): void {
+  vscode.setState(snapshotControls(persistedControls));
   issueFields.classList.toggle('hidden', !isIssueMode());
   milestoneFields.classList.toggle('hidden', isIssueMode());
   submitButton.textContent = isIssueMode() ? 'Create issue' : 'Create milestone';
@@ -219,6 +245,7 @@ window.addEventListener('message', (event: MessageEvent<HostToIssueFormMessage>)
         message.config.scopes.map((s) => ({ value: s.name, text: `${s.name} — ${s.description}` })),
         true,
       );
+      restoreControls(persistedControls, savedState);
       repoLabel.textContent = message.repo
         ? `Repository: ${message.repo}`
         : 'No GitHub remote found in this workspace.';
@@ -234,6 +261,7 @@ window.addEventListener('message', (event: MessageEvent<HostToIssueFormMessage>)
         true,
       );
       setLabels(message.labels);
+      restoreControls([milestoneSelect], savedState);
       render();
       break;
     case 'busy':

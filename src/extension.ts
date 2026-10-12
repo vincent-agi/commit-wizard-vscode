@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { ConfigLoader } from './config/configLoader';
+import { watchWebviewBundles } from './dev/hotReload';
 import { registerInstallHooks } from './hooks/installHooks';
 import { IssueFormPanel, NEW_ISSUE_COMMAND } from './issueForm/IssueFormPanel';
 import { CommitViewProvider } from './webview/CommitViewProvider';
@@ -15,6 +16,10 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     configLoader,
+    watchWebviewBundles(context, () => {
+      provider.reload();
+      IssueFormPanel.reload(context.extensionUri);
+    }),
     registerInstallHooks(configLoader),
     vscode.commands.registerCommand(NEW_ISSUE_COMMAND, () =>
       IssueFormPanel.show(context.extensionUri, configLoader),

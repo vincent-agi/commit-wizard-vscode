@@ -38,6 +38,13 @@ export class CommitViewProvider implements vscode.WebviewViewProvider {
     configLoader.onDidChange(() => void this.broadcastConfig());
   }
 
+  /** Development only: re-renders every open Commit Builder with the freshly built bundle. */
+  public reload(): void {
+    for (const webview of this.webviews) {
+      webview.html = generateHtml(webview, this.extensionUri);
+    }
+  }
+
   public resolveWebviewView(webviewView: vscode.WebviewView): void {
     webviewView.webview.options = {
       enableScripts: true,

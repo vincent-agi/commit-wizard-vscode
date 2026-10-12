@@ -1,6 +1,8 @@
 import { parseCoAuthors } from '../core/coAuthors';
 import { DEFAULT_CONFIG } from '../core/commitConfig';
 import type { CommitConfig } from '../core/commitConfig';
+import { restoreControls, snapshotControls } from './persist';
+import type { PersistedControl } from './persist';
 import { formatCommitMessage } from '../core/formatCommit';
 import { titleLengthStatus } from '../core/titleLength';
 import type { CommitFormInput, IssueKeyword, Scope } from '../core/types';
@@ -8,9 +10,13 @@ import type { HostToWebviewMessage, WebviewToHostMessage } from './messages';
 
 declare function acquireVsCodeApi(): {
   postMessage(message: WebviewToHostMessage): void;
+  getState(): unknown;
+  setState(state: unknown): void;
 };
 
 const vscode = acquireVsCodeApi();
+// Read before the first render, which would overwrite it with the blank form.
+const savedState = vscode.getState();
 
 const typeSelect = document.getElementById('type') as HTMLSelectElement;
 const configWarnings = document.getElementById('configWarnings') as HTMLDivElement;
@@ -41,6 +47,19 @@ const previewBox = document.getElementById('preview') as HTMLDivElement;
 const commitNowButton = document.getElementById('commitNow') as HTMLButtonElement;
 
 let config: CommitConfig = DEFAULT_CONFIG;
+
+const persistedControls: PersistedControl[] = [
+  typeSelect,
+  gitmojiSelect,
+  scopeSelect,
+  issueKeywordSelect,
+  issueInput,
+  descriptionInput,
+  bodyTextarea,
+  breakingChangeCheckbox,
+  breakingChangeDescriptionTextarea,
+  coAuthorsTextarea,
+];
 
 function currentInput(): CommitFormInput {
   return {
@@ -78,6 +97,7 @@ function render(): void {
 
   previewBox.textContent = input.description ? formatCommitMessage(input) : '';
 
+  vscode.setState(snapshotControls(persistedControls));
   vscode.postMessage({ type: 'formChanged', input });
 }
 
@@ -187,7 +207,9 @@ window.addEventListener('message', (event: MessageEvent<HostToWebviewMessage>) =
   const message = event.data;
   if (message.type === 'init') {
     applyConfig(message.config, message.warnings);
-    if (message.detectedIssue) {
+    // Controls survive a webview reload (hot reload, or the view being recreated).
+    restoreControls(persistedControls, savedState);
+    if (message.detectedIssue && !issueInput.value) {
       issueInput.value = message.detectedIssue;
     }
     render();

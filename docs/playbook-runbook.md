@@ -20,9 +20,13 @@ npm install
    with the extension loaded.
 4. Open a Git repository in that host window, click the Activity Bar icon to open **Commit
    Builder**, and exercise the form.
-5. Edit source, save — esbuild watch rebuilds `dist/extension.js`; reload the Extension
-   Development Host window (`Cmd+R` / `Ctrl+R` inside it, or the **Developer: Reload Window**
-   command) to pick up changes.
+5. Edit a **webview** source file (`src/webview/*`, `src/issueForm/*`) and save: esbuild rebuilds
+   `dist/webview.js` / `dist/issueForm.js` and the open Commit Builder and issue form reload
+   themselves within a second, keeping what you typed (form state is stored with the webview
+   API). This watcher only exists when the extension runs in Development mode (F5); production
+   builds never create it.
+6. Edit **extension-host** code (everything else) and save: reload the Extension Development Host
+   window (`Cmd+R` / `Ctrl+R` inside it, or **Developer: Reload Window**) to pick up the change.
 
 `.vscode/launch.json` and `.vscode/tasks.json` provide this out of the box (see below).
 

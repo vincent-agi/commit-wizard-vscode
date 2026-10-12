@@ -65,6 +65,14 @@ export class IssueFormPanel {
     IssueFormPanel.current = new IssueFormPanel(extensionUri, configLoader);
   }
 
+  /** Development only: re-renders the open panel with the freshly built bundle. */
+  public static reload(extensionUri: vscode.Uri): void {
+    const current = IssueFormPanel.current;
+    if (current) {
+      current.panel.webview.html = generateIssueFormHtml(current.panel.webview, extensionUri);
+    }
+  }
+
   private dispose(): void {
     IssueFormPanel.current = undefined;
     for (const disposable of this.disposables) {
