@@ -321,7 +321,7 @@
     "format:check": "prettier --check \"src/**/*.ts\"",
     "pretest:e2e": "npm run compile",
     "test:e2e": "node ./out/test/runTest.js",
-    "package": "vsce package --allow-missing-repository",
+    "package": "npm run compile && vsce package --baseContentUrl .",
     "vscode:prepublish": "npm run compile",
     "prepare": "husky"
   },
