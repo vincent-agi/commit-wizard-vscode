@@ -2,7 +2,7 @@
   "name": "commit-wizard-vscode",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "vincent-agi",
   "license": "MIT",
   "engines": {
@@ -77,10 +77,22 @@
         }
       ],
       "commandPalette": [
-        { "command": "gitmojiCommit.history.show", "when": "false" },
-        { "command": "gitmojiCommit.history.reword", "when": "false" },
-        { "command": "gitmojiCommit.release.openPr", "when": "false" },
-        { "command": "gitmojiCommit.release.signIn", "when": "false" }
+        {
+          "command": "gitmojiCommit.history.show",
+          "when": "false"
+        },
+        {
+          "command": "gitmojiCommit.history.reword",
+          "when": "false"
+        },
+        {
+          "command": "gitmojiCommit.release.openPr",
+          "when": "false"
+        },
+        {
+          "command": "gitmojiCommit.release.signIn",
+          "when": "false"
+        }
       ]
     },
     "keybindings": [
@@ -228,8 +240,13 @@
         },
         "gitmojiCommit.protectedBranches": {
           "type": "array",
-          "items": { "type": "string" },
-          "default": ["main", "master"],
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "main",
+            "master"
+          ],
           "scope": "window",
           "description": "%setting.protectedBranches.description%"
         },
@@ -241,7 +258,12 @@
         },
         "gitmojiCommit.issueTracker.preset": {
           "type": "string",
-          "enum": ["", "jira", "linear", "github"],
+          "enum": [
+            "",
+            "jira",
+            "linear",
+            "github"
+          ],
           "default": "",
           "scope": "window",
           "description": "%setting.issueTracker.preset.description%"
@@ -272,7 +294,10 @@
         },
         "gitmojiCommit.emojiPosition": {
           "type": "string",
-          "enum": ["before", "after"],
+          "enum": [
+            "before",
+            "after"
+          ],
           "default": "before",
           "scope": "window",
           "description": "%setting.emojiPosition.description%"
@@ -287,7 +312,10 @@
         },
         "gitmojiCommit.history.merges": {
           "type": "string",
-          "enum": ["ignore", "flag"],
+          "enum": [
+            "ignore",
+            "flag"
+          ],
           "default": "ignore",
           "scope": "window",
           "description": "%setting.history.merges.description%"
