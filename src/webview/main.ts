@@ -555,7 +555,9 @@ window.addEventListener('message', (event: MessageEvent<HostToWebviewMessage>) =
       applyRepository(message);
       if (message.draft) {
         applyInput(message.draft);
-      } else if (message.detectedIssue) {
+      }
+      // A saved draft may predate the ticket id: fill the field, never overwrite typed input.
+      if (message.detectedIssue && !issueInput.value) {
         issueInput.value = message.detectedIssue;
       }
       render();

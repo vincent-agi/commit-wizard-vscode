@@ -3,7 +3,7 @@ import { extractIssueFromBranch } from './branchIssueExtractor';
 
 describe('extractIssueFromBranch', () => {
   it('extracts a Jira-style project key with number', () => {
-    expect(extractIssueFromBranch('feature/issue-123-login')).toBe('#123');
+    expect(extractIssueFromBranch('feature/PROJ-123-login-form')).toBe('PROJ-123');
   });
 
   it('extracts a Jira-style key regardless of surrounding words', () => {
@@ -32,8 +32,16 @@ describe('extractIssueFromBranch', () => {
     expect(extractIssueFromBranch('')).toBeUndefined();
   });
 
-  it('prefers the Jira-style match over a bare number when both are present', () => {
-    expect(extractIssueFromBranch('feature/123-fixes-issue-456')).toBe('#456');
+  it('prefers a Jira-style key over a keyword number when both are present', () => {
+    expect(extractIssueFromBranch('feature/PROJ-12-fixes-issue-456')).toBe('PROJ-12');
+  });
+
+  it('prefers a custom pattern over a Jira-style key', () => {
+    expect(extractIssueFromBranch('PROJ-1-ENG_42', '(ENG_\\d+)')).toBe('ENG_42');
+  });
+
+  it('prefers an explicit #number over a keyword number', () => {
+    expect(extractIssueFromBranch('fix/#42-relates-to-issue-7')).toBe('#42');
   });
 
   it('uses the first capture group of a custom issue pattern', () => {
